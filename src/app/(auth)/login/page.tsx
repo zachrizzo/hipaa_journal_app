@@ -13,20 +13,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Text } from '@/components/ui/text'
 import { Heading } from '@/components/ui/heading'
 import { FileText, Mail, Lock, AlertCircle, Loader2, User, Stethoscope } from 'lucide-react'
+import { LoginRequest } from '@/types/api'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required')
 })
 
-interface LoginForm {
-  email: string
-  password: string
-}
-
 export default function LoginPage(): React.JSX.Element {
-  const [form, setForm] = useState<LoginForm>({ email: '', password: '' })
-  const [errors, setErrors] = useState<Partial<LoginForm>>({})
+  const [form, setForm] = useState<LoginRequest>({ email: '', password: '' })
+  const [errors, setErrors] = useState<Partial<LoginRequest>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [loginError, setLoginError] = useState('')
   const router = useRouter()
@@ -73,10 +69,10 @@ export default function LoginPage(): React.JSX.Element {
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const fieldErrors: Partial<LoginForm> = {}
+        const fieldErrors: Partial<LoginRequest> = {}
         error.errors.forEach(err => {
           if (err.path[0]) {
-            fieldErrors[err.path[0] as keyof LoginForm] = err.message
+            fieldErrors[err.path[0] as keyof LoginRequest] = err.message
           }
         })
         setErrors(fieldErrors)
@@ -85,7 +81,7 @@ export default function LoginPage(): React.JSX.Element {
     }
   }
 
-  const handleChange = (field: keyof LoginForm) => (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleChange = (field: keyof LoginRequest) => (e: React.ChangeEvent<HTMLInputElement>): void => {
     setForm(prev => ({ ...prev, [field]: e.target.value }))
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }))

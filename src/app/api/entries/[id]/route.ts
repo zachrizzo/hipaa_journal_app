@@ -107,7 +107,7 @@ export async function PUT(
       )
     }
 
-    const updateData: any = {
+    const updateData: Parameters<typeof db.journalEntry.update>[0]['data'] = {
       ...validatedData,
       updatedAt: new Date()
     }

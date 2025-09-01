@@ -1,8 +1,9 @@
-import type { User, Session, JournalEntry, EntryVersion, EntryShare, AuditLog, SystemConfig } from '@prisma/client'
+import type { User, Session, JournalEntry, EntryVersion, EntryShare, AuditLog, SystemConfig, UserRole, ShareScope, EntryStatus, AuditAction } from '.prisma/client'
 
 export type { User, Session, JournalEntry, EntryVersion, EntryShare, AuditLog, SystemConfig }
+export type { UserRole, ShareScope, EntryStatus, AuditAction }
 
-export type { UserRole, ShareScope, EntryStatus, AuditAction } from '@prisma/client'
+// All types are already exported above or defined below
 
 // Database table types
 export type Tables<T extends keyof typeof tableMap> = (typeof tableMap)[T]
@@ -52,14 +53,14 @@ export interface CreateUserInput {
   email: string
   firstName?: string | null
   lastName?: string | null
-  role?: import('@prisma/client').UserRole
+  role?: UserRole
   password?: string
 }
 
 export interface CreateEntryInput {
   title: string
   content: object
-  status?: import('@prisma/client').EntryStatus
+  status?: EntryStatus
   mood?: number
   tags?: string[]
 }
@@ -67,7 +68,7 @@ export interface CreateEntryInput {
 export interface UpdateEntryInput {
   title?: string
   content?: object
-  status?: import('@prisma/client').EntryStatus
+  status?: EntryStatus
   mood?: number
   tags?: string[]
   changeReason?: string
@@ -76,7 +77,7 @@ export interface UpdateEntryInput {
 export interface CreateShareInput {
   entryId: string
   providerId: string
-  scope: import('@prisma/client').ShareScope
+  scope: ShareScope
   message?: string
   expiresAt?: Date
 }

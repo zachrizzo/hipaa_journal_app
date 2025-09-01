@@ -6,7 +6,7 @@ import { db } from '@/lib/db'
 import { createAuditLog, getAuditContext } from '@/lib/security/audit'
 import { sanitizeHtml } from '@/lib/security/sanitize'
 import type { ApiResponse } from '@/types/api'
-import type { Tables } from '@/types/database'
+import type { Tables, EntryStatus } from '@/types/database'
 
 type JournalEntry = Tables<'journal_entries'>
 
@@ -112,7 +112,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const { searchParams } = new URL(request.url)
     const { page, limit, status, search } = listEntriesSchema.parse(Object.fromEntries(searchParams))
 
-    const where: any = {
+    const where: {
+      userId: string
+      status?: EntryStatus
+      OR?: Array<{
+        title?: { contains: string; mode: 'insensitive' | 'default' }
+        tags?: { hasSome: string[] }
+      }>
+    } = {
       userId: session.user.id
     }
 
@@ -122,7 +129,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
     if (search) {
       where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
+        { title: { contains: search, mode: 'insensitive' as const } },
         { tags: { hasSome: [search.toLowerCase()] } }
       ]
     }

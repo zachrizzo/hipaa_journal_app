@@ -59,7 +59,8 @@ export default function AdminDashboard(): React.JSX.Element {
   }
 
   const handleSignOut = async (): Promise<void> => {
-    await signOut({ callbackUrl: '/login' })
+    await signOut({ redirect: false })
+    router.push('/login')
   }
 
   return (

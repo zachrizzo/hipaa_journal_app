@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Text } from '@/components/ui/text'
 import { Heading } from '@/components/ui/heading'
 import { UserPlus, Mail, Lock, User, AlertCircle, Loader2 } from 'lucide-react'
+import { RegisterRequest } from '@/types/api'
 
 const registerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -28,11 +29,8 @@ const registerSchema = z.object({
   path: ["confirmPassword"],
 })
 
-interface RegisterForm {
-  firstName: string
-  lastName: string
-  email: string
-  password: string
+// Extend the generated RegisterRequest type with confirmPassword for client-side validation
+interface RegisterForm extends RegisterRequest {
   confirmPassword: string
 }
 
@@ -89,13 +87,13 @@ export default function RegisterPage(): React.JSX.Element {
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const fieldErrors: Partial<RegisterForm> = {}
+        const fieldErrors: Record<string, string> = {}
         error.errors.forEach(err => {
           if (err.path[0]) {
-            fieldErrors[err.path[0] as keyof RegisterForm] = err.message
+            fieldErrors[err.path[0] as string] = err.message
           }
         })
-        setErrors(fieldErrors)
+        setErrors(fieldErrors as Partial<RegisterForm>)
       } else {
         setRegisterError('An unexpected error occurred')
       }

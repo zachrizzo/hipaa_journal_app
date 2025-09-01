@@ -5,37 +5,14 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getFullName } from '@/lib/utils'
+import type { EntryShareWithRelations } from '@/types/database'
 
 interface ViewSharedEntryPageProps {
   params: Promise<{ id: string }>
 }
 
-interface SharedEntryData {
-  id: string
-  entryId: string
-  providerId: string
-  clientId: string
-  scope: string
-  message: string | null
-  expiresAt: string | null
-  isRevoked: boolean
-  createdAt: string
-  updatedAt: string
-  entry: {
-    id: string
-    title?: string
-    content?: any
-    contentHtml?: string
-    status: string
-    mood?: number | null
-    tags?: string[]
-    aiSummary?: string | null
-    aiSummaryAt?: string | null
-    createdAt: string
-    updatedAt: string
-    wordCount: number
-  }
-}
+// Use generated type instead of manual interface
+type SharedEntryData = EntryShareWithRelations
 
 export default function ViewSharedEntryPage({ params }: ViewSharedEntryPageProps): React.JSX.Element {
   const { data: session, status } = useSession()
@@ -141,18 +118,24 @@ export default function ViewSharedEntryPage({ params }: ViewSharedEntryPageProps
     return moodLabels[mood - 1] || 'Unknown'
   }
 
-  const renderContent = (content: any): string => {
+  const renderContent = (content: unknown): string => {
     if (typeof content === 'string') {
       return content
     }
-    
-    // Simple extraction of text from TipTap JSON
+
     try {
-      if (content?.content) {
-        return content.content
-          .map((node: any) => {
-            if (node.type === 'paragraph' && node.content) {
-              return node.content.map((textNode: any) => textNode.text || '').join('')
+      const data = content as Record<string, unknown>
+      if (data?.content && Array.isArray(data.content)) {
+        return data.content
+          .map((node: unknown) => {
+            const nodeData = node as Record<string, unknown>
+            if (nodeData?.type === 'paragraph' && Array.isArray(nodeData.content)) {
+              return nodeData.content
+                .map((textNode: unknown) => {
+                  const textData = textNode as Record<string, unknown>
+                  return String(textData?.text || '')
+                })
+                .join('')
             }
             return ''
           })
@@ -198,7 +181,7 @@ export default function ViewSharedEntryPage({ params }: ViewSharedEntryPageProps
       <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
         <div className='bg-white rounded-lg shadow-sm p-8 text-center'>
           <h2 className='text-xl font-semibold text-gray-900 mb-4'>Shared Entry Not Found</h2>
-          <p className='text-gray-600 mb-6'>The shared journal entry you're looking for could not be found.</p>
+          <p className='text-gray-600 mb-6'>The shared journal entry you&apos;re looking for could not be found.</p>
           <Link
             href='/provider/shared-entries'
             className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium'
@@ -247,9 +230,9 @@ export default function ViewSharedEntryPage({ params }: ViewSharedEntryPageProps
                 </span></p>
               </div>
               <div className='text-right text-sm text-gray-600'>
-                <p>Shared: {formatDate(shareData.createdAt)}</p>
+                <p>Shared: {formatDate(shareData.createdAt.toISOString())}</p>
                 {shareData.expiresAt && (
-                  <p>Expires: {formatDate(shareData.expiresAt)}</p>
+                  <p>Expires: {formatDate(shareData.expiresAt.toISOString())}</p>
                 )}
               </div>
             </div>
@@ -272,7 +255,7 @@ export default function ViewSharedEntryPage({ params }: ViewSharedEntryPageProps
                 )}
                 <div className='flex items-center space-x-4 text-sm text-gray-600'>
                   <span>📝 {shareData.entry.wordCount} words</span>
-                  <span>🕒 {formatDate(shareData.entry.updatedAt)}</span>
+                  <span>🕒 {formatDate(shareData.entry.updatedAt.toISOString())}</span>
                 </div>
               </div>
             </div>
@@ -296,7 +279,7 @@ export default function ViewSharedEntryPage({ params }: ViewSharedEntryPageProps
               <p className='text-sm text-gray-600'>{shareData.entry.aiSummary}</p>
               {shareData.entry.aiSummaryAt && (
                 <p className='text-xs text-gray-500 mt-1'>
-                  Generated: {formatDate(shareData.entry.aiSummaryAt)}
+                  Generated: {shareData.entry.aiSummaryAt && formatDate(shareData.entry.aiSummaryAt.toISOString())}
                 </p>
               )}
             </div>
@@ -338,15 +321,15 @@ export default function ViewSharedEntryPage({ params }: ViewSharedEntryPageProps
 
           {shareData.scope === 'TITLE_ONLY' && (
             <div className='px-6 py-8 text-center text-gray-500'>
-              <p>This entry was shared with "Title Only" access. Contact the patient for additional details if needed.</p>
+              <p>This entry was shared with &quot;Title Only&quot; access. Contact the patient for additional details if needed.</p>
             </div>
           )}
 
           {/* Timestamps */}
           <div className='px-6 py-3 bg-gray-50 border-t border-gray-200 text-xs text-gray-500'>
             <div className='flex justify-between'>
-              <span>Entry Created: {formatDate(shareData.entry.createdAt)}</span>
-              <span>Entry Last Modified: {formatDate(shareData.entry.updatedAt)}</span>
+              <span>Entry Created: {formatDate(shareData.entry.createdAt.toISOString())}</span>
+              <span>Entry Last Modified: {formatDate(shareData.entry.updatedAt.toISOString())}</span>
             </div>
           </div>
         </div>

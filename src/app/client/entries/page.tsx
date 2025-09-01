@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import type { Tables } from '@/types/database'
+import type { Tables } from '@/types'
 import { getFullName } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 
 type JournalEntry = Tables<'journal_entries'>
 
+// API response interface using database types
 interface EntriesResponse {
   entries: JournalEntry[]
   total: number

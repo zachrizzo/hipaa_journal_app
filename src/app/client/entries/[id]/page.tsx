@@ -111,18 +111,24 @@ export default function ViewEntryPage({ params }: ViewEntryPageProps): React.JSX
     return moodLabels[mood - 1] || 'Unknown'
   }
 
-  const renderContent = (content: any): string => {
+  const renderContent = (content: unknown): string => {
     if (typeof content === 'string') {
       return content
     }
-    
-    // Simple extraction of text from TipTap JSON
+
     try {
-      if (content?.content) {
-        return content.content
-          .map((node: any) => {
-            if (node.type === 'paragraph' && node.content) {
-              return node.content.map((textNode: any) => textNode.text || '').join('')
+      const data = content as Record<string, unknown>
+      if (data?.content && Array.isArray(data.content)) {
+        return data.content
+          .map((node: unknown) => {
+            const nodeData = node as Record<string, unknown>
+            if (nodeData?.type === 'paragraph' && Array.isArray(nodeData.content)) {
+              return nodeData.content
+                .map((textNode: unknown) => {
+                  const textData = textNode as Record<string, unknown>
+                  return String(textData?.text || '')
+                })
+                .join('')
             }
             return ''
           })
@@ -164,7 +170,7 @@ export default function ViewEntryPage({ params }: ViewEntryPageProps): React.JSX
       <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
         <div className='bg-white rounded-lg shadow-sm p-8 text-center'>
           <h2 className='text-xl font-semibold text-gray-900 mb-4'>Entry Not Found</h2>
-          <p className='text-gray-600 mb-6'>The journal entry you're looking for could not be found.</p>
+          <p className='text-gray-600 mb-6'>The journal entry you&apos;re looking for could not be found.</p>
           <Link
             href='/client/entries'
             className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium'

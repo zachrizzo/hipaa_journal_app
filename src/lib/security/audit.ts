@@ -1,13 +1,12 @@
-import type { AuditAction, AuditContext } from '@/types/database'
+import type { AuditAction, AuditContext, AuditLog } from '@/types/database'
 import { db } from '@/lib/db'
 
-export interface AuditLogData {
-  action: AuditAction
-  resource: string
-  resourceId?: string
+// Use generated type but omit auto-generated fields and make optional fields truly optional
+export type AuditLogData = Omit<AuditLog, 'id' | 'createdAt' | 'userId' | 'ipAddress' | 'userAgent' | 'sessionId' | 'details' | 'entryId' | 'shareId' | 'resourceId'> & {
+  entryId?: string | null
+  shareId?: string | null
+  resourceId?: string | null
   details?: Record<string, unknown>
-  entryId?: string
-  shareId?: string
 }
 
 export async function createAuditLog(
@@ -103,7 +102,7 @@ export async function auditSystemAction(
   )
 }
 
-export function getAuditContext(request: Request | any, userId?: string, sessionId?: string): AuditContext {
+export function getAuditContext(request: Request | null | undefined, userId?: string, sessionId?: string): AuditContext {
   let ipAddress = 'unknown'
   let userAgent = 'unknown'
   
@@ -117,10 +116,11 @@ export function getAuditContext(request: Request | any, userId?: string, session
         userAgent = request.headers.get('user-agent') || 'unknown'
       } else if (typeof request.headers === 'object') {
         // NextAuth request object
-        ipAddress = request.headers['x-forwarded-for'] || 
-                   request.headers['x-real-ip'] || 
-                   'unknown'
-        userAgent = request.headers['user-agent'] || 'unknown'
+        const headers = request.headers as unknown as Record<string, string | string[]>
+        ipAddress = Array.isArray(headers['x-forwarded-for'])
+          ? headers['x-forwarded-for'][0]
+          : headers['x-forwarded-for'] as string || 'unknown'
+        userAgent = headers['user-agent'] as string || 'unknown'
       }
     }
   } catch (error) {

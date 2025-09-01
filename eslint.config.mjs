@@ -23,11 +23,39 @@ const eslintConfig = [
     ],
   },
   {
-    files: ["src/app/**/*.{js,jsx,ts,tsx}", "src/components/forms/**/*.{js,jsx,ts,tsx}"],
+    files: ["src/**/*.{js,jsx,ts,tsx}"],
     rules: {
-      // Warn about hardcoded colors in application code
+      // Type consistency rules - ensure generated types are used
+      "@typescript-eslint/no-type-alias": [
+        "warn",
+        {
+          allowAliases: "in-unions",
+          allowCallbacks: "always",
+          allowConditionalTypes: "always",
+          allowConstructors: "always",
+          allowLiterals: "always",
+          allowMappedTypes: "always",
+          allowTupleTypes: "always"
+        }
+      ],
+
+      // Prevent manual database type definitions
       "no-restricted-syntax": [
         "warn",
+        {
+          selector: "TSInterfaceDeclaration > Identifier[name=/^(User|Session|JournalEntry|EntryVersion|EntryShare|AuditLog|SystemConfig)Input$/]",
+          message: "Use generated Prisma types from @/types/database instead of creating manual input interfaces."
+        },
+        {
+          selector: "TSTypeAliasDeclaration > Identifier[name=/^(User|Session|JournalEntry|EntryVersion|EntryShare|AuditLog|SystemConfig)Type$/]",
+          message: "Use generated Prisma types from @/types/database instead of creating manual type aliases."
+        },
+        {
+          selector: "TSPropertySignature > Identifier[name=/^(id|email|firstName|lastName|role|title|content|status|mood|tags|createdAt|updatedAt)$/]",
+          message: "Avoid manual property definitions. Use generated Prisma types instead."
+        },
+
+        // UI color rules (keeping existing)
         {
           selector: "Literal[value=/text-(red|green|blue|yellow|purple|indigo|pink|gray|slate)-[0-9]/]",
           message: "Use Text component with variant prop instead of hardcoded color classes like 'text-red-500'. Use variant='destructive' for red, variant='success' for green, etc."

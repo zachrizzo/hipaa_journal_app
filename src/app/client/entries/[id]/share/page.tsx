@@ -160,7 +160,7 @@ export default function ShareEntryPage({ params }: ShareEntryPageProps): React.J
       <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
         <div className='bg-white rounded-lg shadow-sm p-8 text-center'>
           <h2 className='text-xl font-semibold text-gray-900 mb-4'>Entry Not Found</h2>
-          <p className='text-gray-600 mb-6'>The journal entry you're looking for could not be found.</p>
+          <p className='text-gray-600 mb-6'>The journal entry you&apos;re looking for could not be found.</p>
           <Link
             href='/client/entries'
             className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium'
