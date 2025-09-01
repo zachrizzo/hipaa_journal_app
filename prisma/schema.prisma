@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  PROVIDER
+  ADMIN
+}
+
+enum ShareScope {
+  NONE
+  TITLE_ONLY
+  SUMMARY_ONLY
+  FULL_ACCESS
+}
+
+enum EntryStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AuditAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  SHARE
+  UNSHARE
+  LOGIN
+  LOGOUT
+  EXPORT
+  PRINT
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  emailVerified     DateTime?
+  firstName         String?
+  lastName          String?
+  role              UserRole  @default(CLIENT)
+  hashedPassword    String?
+  isActive          Boolean   @default(true)
+  mfaEnabled        Boolean   @default(false)
+  mfaSecret         String?
+  lastLoginAt       DateTime?
+  loginAttempts     Int       @default(0)
+  lockedUntil       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  sessions          Session[]
+  entries           JournalEntry[]
+  providedShares    EntryShare[] @relation("ShareProvider")
+  receivedShares    EntryShare[] @relation("ShareClient")
+  auditLogs         AuditLog[]
+  createdUsers      User[]       @relation("UserCreatedBy")
+  createdBy         User?        @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdById       String?
+  entryVersions     EntryVersion[]
+  
+  @@map("users")
+}
+
+model Session {
+  id            String   @id @default(cuid())
+  sessionToken  String   @unique
+  accessToken   String?
+  refreshToken  String?
+  expires       DateTime
+  userId        String
+  ipAddress     String?
+  userAgent     String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model JournalEntry {
+  id              String        @id @default(cuid())
+  title           String
+  content         Json          // TipTap JSON AST
+  contentHtml     String?       // Sanitized HTML for display
+  encryptedData   String?       // Encrypted sensitive content
+  status          EntryStatus   @default(DRAFT)
+  mood            Int?          @db.SmallInt // 1-10 scale
+  tags            String[]      @default([])
+  aiSummary       String?
+  aiSummaryAt     DateTime?
+  wordCount       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  publishedAt     DateTime?
+  
+  // Relations
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shares          EntryShare[]
+  versions        EntryVersion[]
+  auditLogs       AuditLog[]
+
+  @@map("journal_entries")
+}
+
+model EntryVersion {
+  id            String   @id @default(cuid())
+  entryId       String
+  versionNumber Int
+  title         String
+  content       Json
+  contentHtml   String?
+  changeReason  String?
+  createdAt     DateTime @default(now())
+  
+  // Relations
+  entry         JournalEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  createdBy     User         @relation(fields: [createdById], references: [id])
+  createdById   String
+
+  @@unique([entryId, versionNumber])
+  @@map("entry_versions")
+}
+
+model EntryShare {
+  id              String     @id @default(cuid())
+  entryId         String
+  providerId      String     // User sharing the entry
+  clientId        String     // User receiving the entry
+  scope           ShareScope @default(SUMMARY_ONLY)
+  message         String?    // Optional message from provider
+  expiresAt       DateTime?  // Optional expiration
+  isRevoked       Boolean    @default(false)
+  revokedAt       DateTime?
+  revokedReason   String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  
+  // Relations
+  entry           JournalEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  provider        User         @relation("ShareProvider", fields: [providerId], references: [id])
+  client          User         @relation("ShareClient", fields: [clientId], references: [id])
+  auditLogs       AuditLog[]
+
+  @@unique([entryId, providerId, clientId])
+  @@map("entry_shares")
+}
+
+model AuditLog {
+  id              String       @id @default(cuid())
+  action          AuditAction
+  resource        String       // Table name or resource type
+  resourceId      String?      // ID of the affected resource
+  userId          String?      // User who performed the action
+  ipAddress       String?
+  userAgent       String?
+  details         Json?        // Additional action details
+  sessionId       String?
+  entryId         String?      // For entry-related actions
+  shareId         String?      // For sharing-related actions
+  createdAt       DateTime     @default(now())
+  
+  // Relations
+  user            User?         @relation(fields: [userId], references: [id])
+  entry           JournalEntry? @relation(fields: [entryId], references: [id])
+  share           EntryShare?   @relation(fields: [shareId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([resource, resourceId])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+model SystemConfig {
+  id            String   @id @default(cuid())
+  key           String   @unique
+  value         String
+  description   String?
+  isEncrypted   Boolean  @default(false)
+  updatedAt     DateTime @updatedAt
+  updatedBy     String?
+
+  @@map("system_config")
+}
