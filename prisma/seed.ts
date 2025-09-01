@@ -17,7 +17,8 @@ async function main() {
     },
     create: {
       email: 'dr.sarah.provider@example.com',
-      name: 'Dr. Sarah Provider',
+      firstName: 'Dr. Sarah',
+      lastName: 'Provider',
       role: 'PROVIDER',
       hashedPassword: await hash('password123!', 12),
       isActive: true,
@@ -31,7 +32,8 @@ async function main() {
     update: {},
     create: {
       email: 'john.doe.client@example.com',
-      name: 'John Doe Client',
+      firstName: 'John Doe',
+      lastName: 'Client',
       role: 'CLIENT',
       hashedPassword: await hash('password123!', 12),
       isActive: true,
@@ -139,7 +141,7 @@ async function main() {
   console.log('Created journal entry:', journalEntry.title)
 
   // Create a share from client to provider
-  const entryShare = await prisma.entryShare.upsert({
+  await prisma.entryShare.upsert({
     where: {
       entryId_providerId_clientId: {
         entryId: journalEntry.id,

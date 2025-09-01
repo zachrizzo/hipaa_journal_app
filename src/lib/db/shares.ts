@@ -393,7 +393,7 @@ export async function getAvailableProviders(
     },
     orderBy: [
       { role: 'asc' },
-      { name: 'asc' },
+      { firstName: 'asc' },
       { email: 'asc' }
     ]
   })
@@ -420,7 +420,7 @@ export async function getAvailableClients(
     },
     orderBy: [
       { role: 'asc' },
-      { name: 'asc' },
+      { firstName: 'asc' },
       { email: 'asc' }
     ]
   })

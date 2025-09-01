@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { getAvailableProviders } from '@/lib/db/shares'
 import type { ApiResponse } from '@/types/api'
 
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<Array<{ id: string; name: string | null; email: string; role: string }>>>> {
+export async function GET(): Promise<NextResponse<ApiResponse<Array<{ id: string; firstName: string | null; lastName: string | null; email: string; role: string }>>>> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {

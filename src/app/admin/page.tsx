@@ -4,6 +4,13 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { getFullName } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Text } from '@/components/ui/text'
+import { Heading } from '@/components/ui/heading'
+import { Shield, Users, FileSearch, Settings, BarChart, LogOut, AlertTriangle } from 'lucide-react'
 
 export default function AdminDashboard(): React.JSX.Element {
   const { data: session, status } = useSession()
@@ -35,13 +42,20 @@ export default function AdminDashboard(): React.JSX.Element {
   if (status === 'loading') {
     return (
       <div className='min-h-screen flex items-center justify-center'>
-        <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600'></div>
+        <Skeleton className='h-32 w-32 rounded-full' />
       </div>
     )
   }
 
   if (!session) {
-    return null
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+          <p className="text-gray-600">You must be logged in to access this page.</p>
+        </div>
+      </div>
+    )
   }
 
   const handleSignOut = async (): Promise<void> => {
@@ -49,74 +63,145 @@ export default function AdminDashboard(): React.JSX.Element {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <nav className='bg-white shadow-sm border-b'>
+    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-zinc-50'>
+      {/* Background Pattern */}
+      <div className='absolute inset-0 bg-grid-slate-100 [mask-image:radial-gradient(ellipse_at_center,white,transparent)] opacity-30' />
+      
+      <nav className='relative z-10 bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-200/50'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='flex justify-between h-16'>
-            <div className='flex items-center'>
-              <h1 className='text-xl font-semibold text-gray-900'>
-                HIPAA Journal - Admin Dashboard
-              </h1>
+            <div className='flex items-center space-x-3'>
+              <div className='w-10 h-10 bg-gradient-to-r from-red-600 to-orange-600 rounded-full flex items-center justify-center'>
+                <Shield className='w-5 h-5 text-white' />
+              </div>
+              <Heading as='h1' size='lg'>
+                Admin Dashboard
+              </Heading>
             </div>
             <div className='flex items-center space-x-4'>
-              <span className='text-sm text-gray-700'>
+              <Text size='sm' variant='muted'>
                 Welcome, {getFullName(session.user.firstName, session.user.lastName)}
-              </span>
-              <button
+              </Text>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleSignOut}
-                className='bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium'
               >
+                <LogOut className='w-4 h-4 mr-2' />
                 Sign Out
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       </nav>
 
-      <main className='max-w-7xl mx-auto py-6 sm:px-6 lg:px-8'>
-        <div className='px-4 py-6 sm:px-0'>
-          <div className='border-4 border-dashed border-gray-200 rounded-lg p-8'>
-            <div className='text-center'>
-              <h2 className='text-2xl font-bold text-gray-900 mb-4'>
-                System Administration
-              </h2>
-              <p className='text-gray-600 mb-8'>
-                Manage the HIPAA Journal system, users, and compliance settings.
-              </p>
-              
-              <div className='bg-white rounded-lg shadow p-6'>
-                <h3 className='text-lg font-medium text-gray-900 mb-4'>
-                  Admin Controls
-                </h3>
-                <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
-                  <button className='bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md'>
-                    User Management
-                  </button>
-                  <button className='bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md'>
-                    Audit Logs
-                  </button>
-                  <button className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md'>
-                    System Settings
-                  </button>
-                  <button className='bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md'>
-                    Compliance Reports
-                  </button>
-                </div>
-              </div>
-
-              <div className='mt-8 bg-red-50 border border-red-200 rounded-lg p-4'>
-                <h4 className='text-red-800 font-medium mb-2'>Administrator Access</h4>
-                <p className='text-red-700 text-sm'>
-                  You have full system access. All administrative actions are logged and monitored.
-                </p>
-              </div>
-
-              <div className='mt-8 text-sm text-gray-500'>
-                <p>Role: System Administrator | Session Status: Active</p>
-                <p>HIPAA Compliant | Maximum security clearance</p>
-              </div>
+      <main className='relative z-10 max-w-7xl mx-auto py-12 sm:px-6 lg:px-8'>
+        <div className='px-4 sm:px-0'>
+          {/* Hero Section */}
+          <div className='text-center mb-12'>
+            <div className='mx-auto w-20 h-20 bg-gradient-to-r from-red-600 to-orange-600 rounded-full flex items-center justify-center mb-6 shadow-2xl'>
+              <Shield className='w-10 h-10 text-white' />
             </div>
+            <Heading as='h1' size='3xl' variant='gradient' className='mb-4'>
+              System Administration
+            </Heading>
+            <Text size='lg' variant='muted' className='max-w-2xl mx-auto'>
+              Manage the HIPAA Journal system, users, and compliance settings with complete administrative control.
+            </Text>
           </div>
+
+          {/* Admin Controls Grid */}
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12'>
+            <Card className='shadow-xl border-0 bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]'>
+              <CardContent className='p-6 text-center'>
+                <div className='mx-auto w-12 h-12 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center mb-4'>
+                  <Users className='w-6 h-6 text-white' />
+                </div>
+                <CardTitle className='text-lg mb-2'>User Management</CardTitle>
+                <Text size='sm' variant='muted' className='mb-4'>
+                  Manage user accounts, roles, and permissions
+                </Text>
+                <Button variant='destructive' size='sm' className='w-full'>
+                  <Users className='w-4 h-4 mr-2' />
+                  Manage Users
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className='shadow-xl border-0 bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]'>
+              <CardContent className='p-6 text-center'>
+                <div className='mx-auto w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mb-4'>
+                  <FileSearch className='w-6 h-6 text-white' />
+                </div>
+                <CardTitle className='text-lg mb-2'>Audit Logs</CardTitle>
+                <Text size='sm' variant='muted' className='mb-4'>
+                  Review system activity and security events
+                </Text>
+                <Button variant='outline' size='sm' className='w-full border-yellow-200 text-yellow-700 hover:bg-yellow-50'>
+                  <FileSearch className='w-4 h-4 mr-2' />
+                  View Logs
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className='shadow-xl border-0 bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]'>
+              <CardContent className='p-6 text-center'>
+                <div className='mx-auto w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mb-4'>
+                  <Settings className='w-6 h-6 text-white' />
+                </div>
+                <CardTitle className='text-lg mb-2'>System Settings</CardTitle>
+                <Text size='sm' variant='muted' className='mb-4'>
+                  Configure system parameters and preferences
+                </Text>
+                <Button variant='outline' size='sm' className='w-full'>
+                  <Settings className='w-4 h-4 mr-2' />
+                  Settings
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className='shadow-xl border-0 bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]'>
+              <CardContent className='p-6 text-center'>
+                <div className='mx-auto w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mb-4'>
+                  <BarChart className='w-6 h-6 text-white' />
+                </div>
+                <CardTitle className='text-lg mb-2'>Compliance Reports</CardTitle>
+                <Text size='sm' variant='muted' className='mb-4'>
+                  Generate HIPAA compliance and audit reports
+                </Text>
+                <Button variant='outline' size='sm' className='w-full border-green-200 text-green-700 hover:bg-green-50'>
+                  <BarChart className='w-4 h-4 mr-2' />
+                  Reports
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Security Alert */}
+          <Alert variant="destructive" className='mb-8 shadow-lg border-0 bg-red-50/80 backdrop-blur-sm'>
+            <AlertTriangle className='h-5 w-5' />
+            <AlertDescription>
+              <div>
+                <Text weight='semibold' className='mb-1'>Administrator Access</Text>
+                <Text size='sm'>
+                  You have full system access. All administrative actions are logged and monitored for security and compliance purposes.
+                </Text>
+              </div>
+            </AlertDescription>
+          </Alert>
+
+          {/* Status Footer */}
+          <Card className='shadow-lg border-0 bg-gradient-to-r from-gray-600/10 to-slate-600/10 backdrop-blur-sm'>
+            <CardContent className='p-6 text-center'>
+              <div className='flex items-center justify-center space-x-2 mb-2'>
+                <div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
+                <Text size='sm' weight='medium'>Role: System Administrator | Session Status: Active</Text>
+              </div>
+              <Text size='sm' variant='muted'>
+                🛡️ HIPAA Compliant | 🔒 Maximum security clearance | 📊 All actions monitored
+              </Text>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>

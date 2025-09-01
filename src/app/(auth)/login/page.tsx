@@ -6,10 +6,13 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { InputWithIcon } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Text } from '@/components/ui/text'
+import { Heading } from '@/components/ui/heading'
+import { FileText, Mail, Lock, AlertCircle, Loader2, User, Stethoscope } from 'lucide-react'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -89,20 +92,72 @@ export default function LoginPage(): React.JSX.Element {
     }
   }
 
+  const handleQuickLogin = async (email: string, password: string): Promise<void> => {
+    setIsLoading(true)
+    setErrors({})
+    setLoginError('')
+
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false
+      })
+
+      if (result?.error) {
+        setLoginError('Quick login failed - user may not exist')
+        setIsLoading(false)
+        return
+      }
+
+      if (result?.ok) {
+        const session = await getSession()
+        if (session?.user?.role) {
+          switch (session.user.role) {
+            case 'ADMIN':
+              router.push('/admin')
+              break
+            case 'PROVIDER':
+              router.push('/provider')
+              break
+            case 'CLIENT':
+            default:
+              router.push('/client')
+              break
+          }
+        } else {
+          router.push('/client')
+        }
+      }
+    } catch (error) {
+      console.error('Quick login error:', error)
+      setLoginError('Quick login failed')
+      setIsLoading(false)
+    }
+  }
+
   return (
-    <div className='min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8'>
-      <Card className='w-full max-w-md'>
-        <CardHeader className='text-center'>
-          <CardTitle className='text-2xl font-bold'>HIPAA Journal</CardTitle>
-          <CardDescription>
+    <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8'>
+      {/* Background Pattern */}
+      <div className='absolute inset-0 bg-grid-slate-100 [mask-image:radial-gradient(ellipse_at_center,white,transparent)] opacity-20' />
+      
+      <Card className='w-full max-w-md relative z-10 shadow-2xl border-0 bg-white/95 backdrop-blur-sm'>
+        <CardHeader className='text-center pb-6 pt-8'>
+          <div className='mx-auto w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-4 shadow-lg'>
+            <FileText className='w-8 h-8 text-white' />
+          </div>
+          <Heading as='h1' size='2xl' variant='gradient'>
+            HIPAA Journal
+          </Heading>
+          <CardDescription className='mt-2'>
             Secure journaling for healthcare professionals and clients
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className='space-y-4'>
+          <form onSubmit={handleSubmit} className='space-y-6'>
             <div className='space-y-2'>
               <Label htmlFor='email'>Email address</Label>
-              <Input
+              <InputWithIcon
                 id='email'
                 name='email'
                 type='email'
@@ -112,15 +167,19 @@ export default function LoginPage(): React.JSX.Element {
                 value={form.email}
                 onChange={handleChange('email')}
                 disabled={isLoading}
+                icon={<Mail className='w-5 h-5' />}
               />
               {errors.email && (
-                <p className='text-sm text-destructive'>{errors.email}</p>
+                <Text variant='destructive' size='sm' className='flex items-center mt-1'>
+                  <AlertCircle className='w-4 h-4 mr-1' />
+                  {errors.email}
+                </Text>
               )}
             </div>
 
             <div className='space-y-2'>
               <Label htmlFor='password'>Password</Label>
-              <Input
+              <InputWithIcon
                 id='password'
                 name='password'
                 type='password'
@@ -130,14 +189,19 @@ export default function LoginPage(): React.JSX.Element {
                 value={form.password}
                 onChange={handleChange('password')}
                 disabled={isLoading}
+                icon={<Lock className='w-5 h-5' />}
               />
               {errors.password && (
-                <p className='text-sm text-destructive'>{errors.password}</p>
+                <Text variant='destructive' size='sm' className='flex items-center mt-1'>
+                  <AlertCircle className='w-4 h-4 mr-1' />
+                  {errors.password}
+                </Text>
               )}
             </div>
 
             {loginError && (
               <Alert variant="destructive">
+                <AlertCircle className='h-4 w-4' />
                 <AlertDescription>{loginError}</AlertDescription>
               </Alert>
             )}
@@ -145,20 +209,61 @@ export default function LoginPage(): React.JSX.Element {
             <Button
               type='submit'
               disabled={isLoading}
+              variant='gradient'
+              size='lg'
               className='w-full'
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? (
+                <>
+                  <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                  Signing in...
+                </>
+              ) : (
+                'Sign in'
+              )}
             </Button>
 
             <div className='text-center'>
-              <p className='text-sm text-muted-foreground'>
+              <Text size='sm' variant='muted'>
                 Don&apos;t have an account?{' '}
-                <Link href='/register' className='text-primary hover:underline font-medium'>
+                <Link href='/register' className='text-primary hover:underline font-medium transition-colors duration-200'>
                   Create account
                 </Link>
-              </p>
+              </Text>
             </div>
           </form>
+
+          {/* Quick Login Buttons for Testing */}
+          <div className='mt-8 pt-6 border-t'>
+            <Text size='xs' variant='muted' align='center' weight='medium' className='mb-4'>
+              🚀 Quick Login for Testing:
+            </Text>
+            <div className='space-y-3'>
+              <Button
+                variant="outline-primary"
+                size="sm"
+                className='w-full'
+                disabled={isLoading}
+                onClick={() => handleQuickLogin('john.doe.client@example.com', 'password123!')}
+              >
+                <User className='w-4 h-4 mr-2' />
+                Login as Client (John Doe)
+              </Button>
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                className='w-full'
+                disabled={isLoading}
+                onClick={() => handleQuickLogin('dr.sarah.provider@example.com', 'password123!')}
+              >
+                <Stethoscope className='w-4 h-4 mr-2' />
+                Login as Provider (Dr. Sarah)
+              </Button>
+            </div>
+            <Text size='xs' variant='muted' align='center' leading='relaxed' className='mt-3'>
+              Use these buttons to quickly test the application with different user roles.
+            </Text>
+          </div>
         </CardContent>
       </Card>
     </div>

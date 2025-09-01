@@ -4,6 +4,18 @@ export type { User, Session, JournalEntry, EntryVersion, EntryShare, AuditLog, S
 
 export type { UserRole, ShareScope, EntryStatus, AuditAction } from '@prisma/client'
 
+// Database table types
+export type Tables<T extends keyof typeof tableMap> = (typeof tableMap)[T]
+export const tableMap = {
+  users: {} as User,
+  sessions: {} as Session,
+  journal_entries: {} as JournalEntry,
+  entry_versions: {} as EntryVersion,
+  entry_shares: {} as EntryShare,
+  audit_logs: {} as AuditLog,
+  system_config: {} as SystemConfig
+}
+
 export type UserWithSessions = User & {
   sessions: Session[]
 }
@@ -38,7 +50,8 @@ export type SafeUser = Omit<User, 'hashedPassword' | 'mfaSecret'>
 
 export interface CreateUserInput {
   email: string
-  name?: string | null
+  firstName?: string | null
+  lastName?: string | null
   role?: import('@prisma/client').UserRole
   password?: string
 }

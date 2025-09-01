@@ -4,6 +4,14 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { z } from 'zod'
+import { Button } from '@/components/ui/button'
+import { InputWithIcon } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Text } from '@/components/ui/text'
+import { Heading } from '@/components/ui/heading'
+import { UserPlus, Mail, Lock, User, AlertCircle, Loader2 } from 'lucide-react'
 
 const registerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -103,154 +111,173 @@ export default function RegisterPage(): React.JSX.Element {
   }
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8'>
-      <div className='max-w-md w-full space-y-8'>
-        <div>
-          <h2 className='mt-6 text-center text-3xl font-extrabold text-gray-900'>
+    <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8'>
+      {/* Background Pattern */}
+      <div className='absolute inset-0 bg-grid-slate-100 [mask-image:radial-gradient(ellipse_at_center,white,transparent)] opacity-20' />
+      
+      <Card className='w-full max-w-md relative z-10 shadow-2xl border-0 bg-white/95 backdrop-blur-sm'>
+        <CardHeader className='text-center pb-6 pt-8'>
+          <div className='mx-auto w-16 h-16 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center mb-4 shadow-lg'>
+            <UserPlus className='w-8 h-8 text-white' />
+          </div>
+          <Heading as='h1' size='2xl' variant='gradient'>
             Create Account
-          </h2>
-          <p className='mt-2 text-center text-sm text-gray-600'>
+          </Heading>
+          <CardDescription className='mt-2'>
             Join HIPAA Journal - Secure journaling for healthcare professionals
-          </p>
-        </div>
-        <form className='mt-8 space-y-6' onSubmit={handleSubmit}>
-          <div className='space-y-4'>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className='space-y-6'>
             <div className='flex space-x-4'>
-              <div className='flex-1'>
-                <label htmlFor='firstName' className='sr-only'>
-                  First Name
-                </label>
-                <input
+              <div className='flex-1 space-y-2'>
+                <Label htmlFor='firstName'>First Name</Label>
+                <InputWithIcon
                   id='firstName'
                   name='firstName'
                   type='text'
                   autoComplete='given-name'
                   required
-                  className='relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm'
                   placeholder='First Name'
                   value={form.firstName}
                   onChange={handleChange('firstName')}
                   disabled={isLoading}
+                  icon={<User className='w-5 h-5' />}
                 />
                 {errors.firstName && (
-                  <p className='mt-1 text-sm text-red-600'>{errors.firstName}</p>
+                  <Text variant='destructive' size='sm' className='flex items-center mt-1'>
+                    <AlertCircle className='w-4 h-4 mr-1' />
+                    {errors.firstName}
+                  </Text>
                 )}
               </div>
-              <div className='flex-1'>
-                <label htmlFor='lastName' className='sr-only'>
-                  Last Name
-                </label>
-                <input
+              <div className='flex-1 space-y-2'>
+                <Label htmlFor='lastName'>Last Name</Label>
+                <InputWithIcon
                   id='lastName'
                   name='lastName'
                   type='text'
                   autoComplete='family-name'
                   required
-                  className='relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm'
                   placeholder='Last Name'
                   value={form.lastName}
                   onChange={handleChange('lastName')}
                   disabled={isLoading}
+                  icon={<User className='w-5 h-5' />}
                 />
                 {errors.lastName && (
-                  <p className='mt-1 text-sm text-red-600'>{errors.lastName}</p>
+                  <Text variant='destructive' size='sm' className='flex items-center mt-1'>
+                    <AlertCircle className='w-4 h-4 mr-1' />
+                    {errors.lastName}
+                  </Text>
                 )}
               </div>
             </div>
-            <div>
-              <label htmlFor='email' className='sr-only'>
-                Email address
-              </label>
-              <input
+            <div className='space-y-2'>
+              <Label htmlFor='email'>Email address</Label>
+              <InputWithIcon
                 id='email'
                 name='email'
                 type='email'
                 autoComplete='email'
                 required
-                className='relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm'
                 placeholder='Email address'
                 value={form.email}
                 onChange={handleChange('email')}
                 disabled={isLoading}
+                icon={<Mail className='w-5 h-5' />}
               />
               {errors.email && (
-                <p className='mt-1 text-sm text-red-600'>{errors.email}</p>
+                <Text variant='destructive' size='sm' className='flex items-center mt-1'>
+                  <AlertCircle className='w-4 h-4 mr-1' />
+                  {errors.email}
+                </Text>
               )}
             </div>
-            <div>
-              <label htmlFor='password' className='sr-only'>
-                Password
-              </label>
-              <input
+            <div className='space-y-2'>
+              <Label htmlFor='password'>Password</Label>
+              <InputWithIcon
                 id='password'
                 name='password'
                 type='password'
                 autoComplete='new-password'
                 required
-                className='relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm'
                 placeholder='Password'
                 value={form.password}
                 onChange={handleChange('password')}
                 disabled={isLoading}
+                icon={<Lock className='w-5 h-5' />}
               />
               {errors.password && (
-                <p className='mt-1 text-sm text-red-600'>{errors.password}</p>
+                <Text variant='destructive' size='sm' className='flex items-center mt-1'>
+                  <AlertCircle className='w-4 h-4 mr-1' />
+                  {errors.password}
+                </Text>
               )}
             </div>
-            <div>
-              <label htmlFor='confirmPassword' className='sr-only'>
-                Confirm Password
-              </label>
-              <input
+            <div className='space-y-2'>
+              <Label htmlFor='confirmPassword'>Confirm Password</Label>
+              <InputWithIcon
                 id='confirmPassword'
                 name='confirmPassword'
                 type='password'
                 autoComplete='new-password'
                 required
-                className='relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm'
                 placeholder='Confirm Password'
                 value={form.confirmPassword}
                 onChange={handleChange('confirmPassword')}
                 disabled={isLoading}
+                icon={<Lock className='w-5 h-5' />}
               />
               {errors.confirmPassword && (
-                <p className='mt-1 text-sm text-red-600'>{errors.confirmPassword}</p>
+                <Text variant='destructive' size='sm' className='flex items-center mt-1'>
+                  <AlertCircle className='w-4 h-4 mr-1' />
+                  {errors.confirmPassword}
+                </Text>
               )}
             </div>
-          </div>
 
-          {registerError && (
-            <div className='text-center text-sm text-red-600'>
-              {registerError}
-            </div>
-          )}
+            {registerError && (
+              <Alert variant="destructive">
+                <AlertCircle className='h-4 w-4' />
+                <AlertDescription>{registerError}</AlertDescription>
+              </Alert>
+            )}
 
-          {successMessage && (
-            <div className='text-center text-sm text-green-600'>
-              {successMessage}
-            </div>
-          )}
+            {successMessage && (
+              <Alert>
+                <AlertDescription>{successMessage}</AlertDescription>
+              </Alert>
+            )}
 
-          <div>
-            <button
+            <Button
               type='submit'
               disabled={isLoading}
-              className='group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed'
+              variant='gradient'
+              size='lg'
+              className='w-full'
             >
-              {isLoading ? 'Creating account...' : 'Create account'}
-            </button>
-          </div>
+              {isLoading ? (
+                <>
+                  <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                  Creating account...
+                </>
+              ) : (
+                'Create account'
+              )}
+            </Button>
 
-          <div className='text-center'>
-            <p className='text-sm text-gray-600'>
-              Already have an account?{' '}
-              <Link href='/login' className='font-medium text-indigo-600 hover:text-indigo-500'>
-                Sign in
-              </Link>
-            </p>
-          </div>
-        </form>
-      </div>
+            <div className='text-center'>
+              <Text size='sm' variant='muted'>
+                Already have an account?{' '}
+                <Link href='/login' className='text-primary hover:underline font-medium transition-colors duration-200'>
+                  Sign in
+                </Link>
+              </Text>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -6,6 +6,14 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Tables } from '@/types/database'
 import { getFullName } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 type JournalEntry = Tables<'journal_entries'>
 
@@ -26,19 +34,6 @@ export default function EntriesPage(): React.JSX.Element {
   const [totalPages, setTotalPages] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'DRAFT' | 'PUBLISHED'>('all')
-
-  if (status === 'loading') {
-    return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600'></div>
-      </div>
-    )
-  }
-
-  if (!session) {
-    router.push('/login')
-    return <></>
-  }
 
   const fetchEntries = async (page = 1, search = '', status = 'all'): Promise<void> => {
     setIsLoading(true)
@@ -77,8 +72,23 @@ export default function EntriesPage(): React.JSX.Element {
   }
 
   useEffect(() => {
-    fetchEntries(currentPage, searchQuery, statusFilter)
-  }, [currentPage, searchQuery, statusFilter])
+    if (session) {
+      fetchEntries(currentPage, searchQuery, statusFilter)
+    }
+  }, [currentPage, searchQuery, statusFilter, session])
+
+  if (status === 'loading') {
+    return (
+      <div className='min-h-screen flex items-center justify-center'>
+        <Skeleton className='h-32 w-32 rounded-full' />
+      </div>
+    )
+  }
+
+  if (!session) {
+    router.push('/login')
+    return <></>
+  }
 
   const handleSearch = (e: React.FormEvent): void => {
     e.preventDefault()
@@ -86,8 +96,8 @@ export default function EntriesPage(): React.JSX.Element {
     fetchEntries(1, searchQuery, statusFilter)
   }
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (date: Date | string): string => {
+    return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -96,18 +106,6 @@ export default function EntriesPage(): React.JSX.Element {
     })
   }
 
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'PUBLISHED':
-        return 'bg-green-100 text-green-800'
-      case 'DRAFT':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'ARCHIVED':
-        return 'bg-gray-100 text-gray-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
 
   const getMoodEmoji = (mood?: number): string => {
     if (!mood) return '😐'
@@ -116,29 +114,27 @@ export default function EntriesPage(): React.JSX.Element {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <nav className='bg-white shadow-sm border-b'>
+    <div className='min-h-screen bg-background'>
+      <nav className='bg-card shadow-sm border-b'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='flex justify-between items-center h-16'>
             <div className='flex items-center space-x-4'>
-              <Link 
-                href='/client'
-                className='text-blue-600 hover:text-blue-800 font-medium'
-              >
-                ← Back to Dashboard
-              </Link>
-              <h1 className='text-xl font-semibold text-gray-900'>
+              <Button variant="ghost" asChild>
+                <Link href='/client'>
+                  ← Back to Dashboard
+                </Link>
+              </Button>
+              <h1 className='text-xl font-semibold'>
                 Journal Entries
               </h1>
             </div>
             <div className='flex items-center space-x-4'>
-              <Link
-                href='/client/entries/new'
-                className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium'
-              >
-                New Entry
-              </Link>
-              <span className='text-sm text-gray-700'>
+              <Button asChild>
+                <Link href='/client/entries/new'>
+                  New Entry
+                </Link>
+              </Button>
+              <span className='text-sm text-muted-foreground'>
                 {getFullName(session.user.firstName, session.user.lastName)}
               </span>
             </div>
@@ -148,145 +144,139 @@ export default function EntriesPage(): React.JSX.Element {
 
       <main className='max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8'>
         {/* Search and Filters */}
-        <div className='bg-white rounded-lg shadow-sm p-4 mb-6'>
-          <form onSubmit={handleSearch} className='flex gap-4 items-end'>
-            <div className='flex-1'>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Search entries
-              </label>
-              <input
-                type='text'
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder='Search by title or tags...'
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-              />
-            </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Status
-              </label>
-              <select
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
-                className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-              >
-                <option value='all'>All</option>
-                <option value='DRAFT'>Draft</option>
-                <option value='PUBLISHED'>Published</option>
-              </select>
-            </div>
-            <button
-              type='submit'
-              className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700'
-            >
-              Search
-            </button>
-          </form>
-        </div>
+        <Card className='mb-6'>
+          <CardContent className='p-4'>
+            <form onSubmit={handleSearch} className='flex gap-4 items-end'>
+              <div className='flex-1 space-y-2'>
+                <Label>Search entries</Label>
+                <Input
+                  type='text'
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder='Search by title or tags...'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label>Status</Label>
+                <Select value={statusFilter} onValueChange={(value: typeof statusFilter) => setStatusFilter(value)}>
+                  <SelectTrigger className='w-32'>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All</SelectItem>
+                    <SelectItem value='DRAFT'>Draft</SelectItem>
+                    <SelectItem value='PUBLISHED'>Published</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button type='submit'>Search</Button>
+            </form>
+          </CardContent>
+        </Card>
 
         {/* Error Message */}
         {error && (
-          <div className='mb-6 p-4 bg-red-50 border border-red-200 rounded-md'>
-            <p className='text-red-700'>{error}</p>
-          </div>
+          <Alert variant="destructive" className='mb-6'>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         {/* Entries List */}
         {isLoading ? (
           <div className='flex justify-center py-12'>
-            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+            <Skeleton className='h-8 w-8 rounded-full' />
           </div>
         ) : entries.length === 0 ? (
-          <div className='bg-white rounded-lg shadow-sm p-12 text-center'>
-            <h3 className='text-lg font-medium text-gray-900 mb-2'>No entries found</h3>
-            <p className='text-gray-600 mb-4'>Start writing your first journal entry!</p>
-            <Link
-              href='/client/entries/new'
-              className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium inline-block'
-            >
-              Create Entry
-            </Link>
-          </div>
+          <Card className='p-12 text-center'>
+            <CardHeader>
+              <CardTitle className='mb-2'>No entries found</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className='text-muted-foreground mb-4'>Start writing your first journal entry!</p>
+              <Button asChild>
+                <Link href='/client/entries/new'>Create Entry</Link>
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <div className='space-y-4'>
             {entries.map(entry => (
-              <div key={entry.id} className='bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow'>
-                <div className='flex justify-between items-start mb-3'>
-                  <div className='flex-1'>
-                    <div className='flex items-center space-x-2 mb-2'>
-                      <h3 className='text-lg font-semibold text-gray-900'>
-                        {entry.title}
-                      </h3>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(entry.status)}`}>
-                        {entry.status.toLowerCase()}
-                      </span>
+              <Card key={entry.id} className='hover:shadow-md transition-shadow'>
+                <CardContent className='p-6'>
+                  <div className='flex justify-between items-start mb-3'>
+                    <div className='flex-1'>
+                      <div className='flex items-center space-x-2 mb-2'>
+                        <h3 className='text-lg font-semibold'>
+                          {entry.title}
+                        </h3>
+                        <Badge variant={entry.status === 'PUBLISHED' ? 'default' : entry.status === 'DRAFT' ? 'secondary' : 'outline'}>
+                          {entry.status.toLowerCase()}
+                        </Badge>
+                      </div>
+                      <div className='flex items-center space-x-4 text-sm text-muted-foreground'>
+                        <span>📝 {entry.wordCount} words</span>
+                        {entry.mood && (
+                          <span>{getMoodEmoji(entry.mood)} Mood: {entry.mood}/10</span>
+                        )}
+                        <span>🕒 {formatDate(entry.updatedAt)}</span>
+                      </div>
                     </div>
-                    <div className='flex items-center space-x-4 text-sm text-gray-600'>
-                      <span>📝 {entry.wordCount} words</span>
-                      {entry.mood && (
-                        <span>{getMoodEmoji(entry.mood)} Mood: {entry.mood}/10</span>
-                      )}
-                      <span>🕒 {formatDate(entry.updatedAt)}</span>
+                    <div className='flex space-x-2'>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/client/entries/${entry.id}/edit`}>
+                          Edit
+                        </Link>
+                      </Button>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/client/entries/${entry.id}`}>
+                          View
+                        </Link>
+                      </Button>
                     </div>
                   </div>
-                  <div className='flex space-x-2'>
-                    <Link
-                      href={`/client/entries/${entry.id}/edit`}
-                      className='text-blue-600 hover:text-blue-800 font-medium'
-                    >
-                      Edit
-                    </Link>
-                    <Link
-                      href={`/client/entries/${entry.id}`}
-                      className='text-gray-600 hover:text-gray-800 font-medium'
-                    >
-                      View
-                    </Link>
-                  </div>
-                </div>
-                
-                {entry.tags && entry.tags.length > 0 && (
-                  <div className='flex flex-wrap gap-1 mb-3'>
-                    {entry.tags.map(tag => (
-                      <span key={tag} className='px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full'>
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                  
+                  {entry.tags && entry.tags.length > 0 && (
+                    <div className='flex flex-wrap gap-1 mb-3'>
+                      {entry.tags.map((tag: string) => (
+                        <Badge key={tag} variant="secondary" className='text-xs'>
+                          #{tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
 
-                {entry.aiSummary && (
-                  <div className='mt-3 p-3 bg-gray-50 rounded-md'>
-                    <h4 className='text-sm font-medium text-gray-700 mb-1'>AI Summary</h4>
-                    <p className='text-sm text-gray-600'>{entry.aiSummary}</p>
-                  </div>
-                )}
-              </div>
+                  {entry.aiSummary && (
+                    <div className='mt-3 p-3 bg-muted rounded-md'>
+                      <h4 className='text-sm font-medium mb-1'>AI Summary</h4>
+                      <p className='text-sm text-muted-foreground'>{entry.aiSummary}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className='mt-8 flex justify-center space-x-2'>
-            <button
+          <div className='mt-8 flex justify-center items-center space-x-2'>
+            <Button
+              variant="outline"
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className='px-3 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed'
             >
               Previous
-            </button>
-            <span className='px-3 py-2 bg-blue-600 text-white rounded-md'>
+            </Button>
+            <Badge variant="default" className='px-3 py-2'>
               {currentPage} of {totalPages}
-            </span>
-            <button
+            </Badge>
+            <Button
+              variant="outline"
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className='px-3 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed'
             >
               Next
-            </button>
+            </Button>
           </div>
         )}
       </main>

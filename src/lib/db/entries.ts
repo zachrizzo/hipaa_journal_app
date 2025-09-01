@@ -250,7 +250,7 @@ export async function getEntryWithDetails(
       shares: {
         include: {
           client: {
-            select: { id: true, name: true, email: true }
+            select: { id: true, firstName: true, lastName: true, email: true }
           }
         },
         where: { isRevoked: false }
@@ -258,7 +258,7 @@ export async function getEntryWithDetails(
       versions: {
         include: {
           createdBy: {
-            select: { id: true, name: true, email: true }
+            select: { id: true, firstName: true, lastName: true, email: true }
           }
         },
         orderBy: { createdAt: 'desc' },
@@ -293,7 +293,7 @@ export async function getSharedEntries(
     },
     include: {
       user: {
-        select: { id: true, name: true, email: true, role: true }
+        select: { id: true, firstName: true, lastName: true, email: true, role: true }
       }
     },
     orderBy: { updatedAt: 'desc' }

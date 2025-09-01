@@ -76,8 +76,8 @@ export default function ViewEntryPage({ params }: ViewEntryPageProps): React.JSX
     return <></>
   }
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (date: Date | string): string => {
+    return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -266,7 +266,7 @@ export default function ViewEntryPage({ params }: ViewEntryPageProps): React.JSX
                 <div>
                   <h3 className='text-sm font-medium text-gray-700 mb-2'>Tags</h3>
                   <div className='flex flex-wrap gap-1'>
-                    {entry.tags.map(tag => (
+                    {entry.tags.map((tag: string) => (
                       <span key={tag} className='px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full'>
                         #{tag}
                       </span>
