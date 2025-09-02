@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { getFullName } from '@/lib/utils'
+import { AppHeader } from '@/components/layout/AppHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -52,7 +52,7 @@ export default function AdminDashboard(): React.JSX.Element {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
-          <p className="text-gray-600">You must be logged in to access this page.</p>
+          <Text variant="muted">You must be logged in to access this page.</Text>
         </div>
       </div>
     )
@@ -68,33 +68,21 @@ export default function AdminDashboard(): React.JSX.Element {
       {/* Background Pattern */}
       <div className='absolute inset-0 bg-grid-slate-100 [mask-image:radial-gradient(ellipse_at_center,white,transparent)] opacity-30' />
       
-      <nav className='relative z-10 bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-200/50'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='flex justify-between h-16'>
-            <div className='flex items-center space-x-3'>
-              <div className='w-10 h-10 bg-gradient-to-r from-red-600 to-orange-600 rounded-full flex items-center justify-center'>
-                <Shield className='w-5 h-5 text-white' />
-              </div>
-              <Heading as='h1' size='lg'>
-                Admin Dashboard
-              </Heading>
-            </div>
-            <div className='flex items-center space-x-4'>
-              <Text size='sm' variant='muted'>
-                Welcome, {getFullName(session.user.firstName, session.user.lastName)}
-              </Text>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSignOut}
-              >
-                <LogOut className='w-4 h-4 mr-2' />
-                Sign Out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <AppHeader
+        title="Admin Dashboard"
+        user={session.user}
+        backgroundStyle="glass"
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSignOut}
+          >
+            <LogOut className='w-4 h-4 mr-2' />
+            Sign Out
+          </Button>
+        }
+      />
 
       <main className='relative z-10 max-w-7xl mx-auto py-12 sm:px-6 lg:px-8'>
         <div className='px-4 sm:px-0'>
@@ -138,7 +126,7 @@ export default function AdminDashboard(): React.JSX.Element {
                 <Text size='sm' variant='muted' className='mb-4'>
                   Review system activity and security events
                 </Text>
-                <Button variant='outline' size='sm' className='w-full border-yellow-200 text-yellow-700 hover:bg-yellow-50'>
+                <Button variant='outline' size='sm' className='w-full'>
                   <FileSearch className='w-4 h-4 mr-2' />
                   View Logs
                 </Button>
@@ -170,7 +158,7 @@ export default function AdminDashboard(): React.JSX.Element {
                 <Text size='sm' variant='muted' className='mb-4'>
                   Generate HIPAA compliance and audit reports
                 </Text>
-                <Button variant='outline' size='sm' className='w-full border-green-200 text-green-700 hover:bg-green-50'>
+                <Button variant='outline' size='sm' className='w-full'>
                   <BarChart className='w-4 h-4 mr-2' />
                   Reports
                 </Button>
@@ -179,7 +167,7 @@ export default function AdminDashboard(): React.JSX.Element {
           </div>
 
           {/* Security Alert */}
-          <Alert variant="destructive" className='mb-8 shadow-lg border-0 bg-red-50/80 backdrop-blur-sm'>
+          <Alert variant="destructive" className='mb-8 shadow-lg border-0 backdrop-blur-sm'>
             <AlertTriangle className='h-5 w-5' />
             <AlertDescription>
               <div>
@@ -195,7 +183,7 @@ export default function AdminDashboard(): React.JSX.Element {
           <Card className='shadow-lg border-0 bg-gradient-to-r from-gray-600/10 to-slate-600/10 backdrop-blur-sm'>
             <CardContent className='p-6 text-center'>
               <div className='flex items-center justify-center space-x-2 mb-2'>
-                <div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
+                <div className='w-2 h-2 bg-primary rounded-full animate-pulse'></div>
                 <Text size='sm' weight='medium'>Role: System Administrator | Session Status: Active</Text>
               </div>
               <Text size='sm' variant='muted'>

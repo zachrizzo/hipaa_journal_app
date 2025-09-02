@@ -4,7 +4,12 @@ import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
 import { getShareById, updateShare, revokeShare } from '@/lib/db/shares'
 import { getAuditContext } from '@/lib/security/audit'
-import type { ApiResponse, UpdateShareRequest } from '@/types/api'
+import type { ApiResponse } from '@/types/api'
+import type { Prisma } from '@prisma/client'
+
+interface ShareParams {
+  params: Promise<{ id: string }>
+}
 
 const updateShareSchema = z.object({
   scope: z.enum(['NONE', 'TITLE_ONLY', 'SUMMARY_ONLY', 'FULL_ACCESS']).optional(),
@@ -18,7 +23,7 @@ const revokeShareSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: ShareParams
 ): Promise<NextResponse<ApiResponse<Record<string, unknown>>>> {
   try {
     const session = await getServerSession(authOptions)
@@ -126,7 +131,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: ShareParams
 ): Promise<NextResponse<ApiResponse<{ message: string }>>> {
   try {
     const session = await getServerSession(authOptions)
@@ -146,7 +151,7 @@ export async function PUT(
     }
 
     const { id: shareId } = await params
-    const body: UpdateShareRequest = await request.json()
+    const body: Partial<Pick<Prisma.EntryShareUpdateInput, 'scope' | 'message' | 'expiresAt'>> = await request.json()
     const validatedData = updateShareSchema.parse(body)
 
     const context = getAuditContext(request, session.user.id)
@@ -190,7 +195,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: ShareParams
 ): Promise<NextResponse<ApiResponse<{ message: string }>>> {
   try {
     const session = await getServerSession(authOptions)

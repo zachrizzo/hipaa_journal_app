@@ -6,9 +6,11 @@ import { db } from '@/lib/db'
 import { createAuditLog, getAuditContext } from '@/lib/security/audit'
 import { sanitizeHtml } from '@/lib/security/sanitize'
 import type { ApiResponse } from '@/types/api'
-import type { Tables } from '@/types/database'
+import type { JournalEntry } from '@/types/database'
 
-type JournalEntry = Tables<'journal_entries'>
+interface EntryParams {
+  params: Promise<{ id: string }>
+}
 
 const updateEntrySchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters').optional(),
@@ -21,7 +23,7 @@ const updateEntrySchema = z.object({
 // Get a specific journal entry
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: EntryParams
 ): Promise<NextResponse<ApiResponse<JournalEntry>>> {
   try {
     const session = await getServerSession(authOptions)
@@ -77,7 +79,7 @@ export async function GET(
 // Update a journal entry
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: EntryParams
 ): Promise<NextResponse<ApiResponse<JournalEntry>>> {
   try {
     const session = await getServerSession(authOptions)
@@ -169,11 +171,11 @@ export async function PUT(
   }
 }
 
-// Delete a journal entry
+// Delete a journal entry and all related data
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse<ApiResponse<null>>> {
+  { params }: EntryParams
+): Promise<NextResponse<ApiResponse<{ deletedShares: number; deletedVersions: number; preservedAuditLogs: number }>>> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -185,13 +187,24 @@ export async function DELETE(
 
     const { id: entryId } = await params
 
-    // Check if entry exists and user owns it
+    // Check if entry exists and user owns it, also get related data counts
     const existingEntry = await db.journalEntry.findFirst({
       where: {
         id: entryId,
         userId: session.user.id
       },
-      select: { id: true, title: true }
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        _count: {
+          select: {
+            shares: true,
+            versions: true,
+            auditLogs: true
+          }
+        }
+      }
     })
 
     if (!existingEntry) {
@@ -201,28 +214,47 @@ export async function DELETE(
       )
     }
 
-    await db.journalEntry.delete({
-      where: { id: entryId }
-    })
-
-    // Audit log
     const context = getAuditContext(request, session.user.id)
+
+    // Audit log BEFORE deletion (for compliance)
     await createAuditLog(
       {
         action: 'DELETE',
         resource: 'journal_entries',
         resourceId: entryId,
         entryId,
-        details: { title: existingEntry.title }
+        details: {
+          title: existingEntry.title,
+          status: existingEntry.status,
+          sharesCount: existingEntry._count.shares,
+          versionsCount: existingEntry._count.versions,
+          auditLogsCount: existingEntry._count.auditLogs,
+          deletionReason: 'User requested deletion'
+        }
       },
       context
     )
 
-    return NextResponse.json({
-      success: true,
-      data: null,
-      message: 'Entry deleted successfully'
+    // Delete the entry (this will cascade to versions and shares due to onDelete: Cascade)
+    await db.journalEntry.delete({
+      where: { id: entryId }
     })
+
+    // Note: Audit logs for the entry are preserved for compliance
+    // They remain in the database but with entryId still pointing to the deleted entry
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: 'Entry and all related data deleted successfully',
+        data: {
+          deletedShares: existingEntry._count.shares,
+          deletedVersions: existingEntry._count.versions,
+          preservedAuditLogs: existingEntry._count.auditLogs
+        }
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error('Error deleting entry:', error)
     return NextResponse.json(

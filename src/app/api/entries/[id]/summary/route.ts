@@ -7,6 +7,10 @@ import { generateEntrySummary, validateSummaryContent } from '@/lib/ai/summarize
 import { createAuditLog, getAuditContext } from '@/lib/security/audit'
 import type { ApiResponse, GenerateSummaryResponse } from '@/types/api'
 
+interface EntryParams {
+  params: Promise<{ id: string }>
+}
+
 const generateSummarySchema = z.object({
   forceRegenerate: z.boolean().optional().default(false),
   includeMoodAnalysis: z.boolean().optional().default(false)
@@ -14,7 +18,7 @@ const generateSummarySchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: EntryParams
 ): Promise<NextResponse<ApiResponse<GenerateSummaryResponse>>> {
   try {
     const session = await getServerSession(authOptions)
@@ -181,7 +185,7 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: EntryParams
 ): Promise<NextResponse<ApiResponse<GenerateSummaryResponse | null>>> {
   try {
     const session = await getServerSession(authOptions)

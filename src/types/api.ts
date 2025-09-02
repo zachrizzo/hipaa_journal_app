@@ -24,6 +24,14 @@ export interface PaginationResponse<T> {
 }
 
 // Auth API types
+export interface SessionUser {
+  id: string
+  email: string
+  firstName: string | null
+  lastName: string | null
+  role: UserRole
+}
+
 export interface LoginRequest {
   email: string
   password: string
@@ -31,13 +39,7 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  user: {
-    id: string
-    email: string
-    firstName: string | null
-    lastName: string | null
-    role: UserRole
-  }
+  user: SessionUser
   sessionToken: string
   expiresAt: string
 }
@@ -87,6 +89,8 @@ export interface EntryListResponse {
   createdAt: string
   updatedAt: string
   publishedAt: string | null
+  aiSummary: string | null
+  aiSummaryAt: string | null
 }
 
 export interface EntryDetailResponse {
@@ -117,6 +121,13 @@ export interface EntryDetailResponse {
     scope: ShareScope
     createdAt: string
   }[]
+}
+
+export interface EntriesListResponse {
+  entries: EntryListResponse[]
+  total: number
+  page: number
+  totalPages: number
 }
 
 // Share API types
@@ -155,6 +166,14 @@ export interface UserListResponse {
   isActive: boolean
   lastLoginAt: string | null
   createdAt: string
+}
+
+export interface ProviderListResponse {
+  id: string
+  firstName: string | null
+  lastName: string | null
+  email: string
+  role: string
 }
 
 export interface CreateUserRequest {

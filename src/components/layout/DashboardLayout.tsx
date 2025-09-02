@@ -14,8 +14,6 @@ interface DashboardLayoutProps {
   isLoading: boolean
   onSignOut: () => void
   title: string
-  gradientFrom: string
-  gradientTo: string
   icon: LucideIcon
   children: ReactNode
   headerActions?: ReactNode
@@ -26,8 +24,6 @@ export function DashboardLayout({
   isLoading,
   onSignOut,
   title,
-  gradientFrom,
-  gradientTo,
   icon: Icon,
   children,
   headerActions
@@ -52,7 +48,7 @@ export function DashboardLayout({
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${gradientFrom} ${gradientTo}`}>
+    <div className='min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'>
       {/* Background Pattern */}
       <div className='absolute inset-0 bg-grid-slate-100 [mask-image:radial-gradient(ellipse_at_center,white,transparent)] opacity-20' />
       
@@ -60,7 +56,7 @@ export function DashboardLayout({
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='flex justify-between items-center h-16'>
             <div className='flex items-center space-x-3'>
-              <div className={`w-10 h-10 bg-gradient-to-r ${gradientFrom} ${gradientTo} rounded-full flex items-center justify-center`}>
+              <div className='w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center'>
                 <Icon className='w-5 h-5 text-white' />
               </div>
               <Heading as='h1' size='lg'>

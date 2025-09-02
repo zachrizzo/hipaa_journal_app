@@ -23,6 +23,12 @@ const eslintConfig = [
     ],
   },
   {
+    files: ["*.js", "*.mjs", "tailwind.config.js", "test-login.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off"
+    }
+  },
+  {
     files: ["src/**/*.{js,jsx,ts,tsx}"],
     rules: {
       // Type consistency rules - ensure generated types are used

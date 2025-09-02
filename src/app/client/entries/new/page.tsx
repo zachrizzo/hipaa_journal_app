@@ -3,17 +3,16 @@
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { JournalEntryForm } from '@/components/forms/JournalEntryForm'
+import { AppHeader } from '@/components/layout/AppHeader'
+import { entriesService } from '@/services'
 import type { CreateEntryInput } from '@/types/database'
-import { getFullName } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Text } from '@/components/ui/text'
 import { Heading } from '@/components/ui/heading'
-import { ArrowLeft, PlusCircle, AlertCircle } from 'lucide-react'
+import { PlusCircle, AlertCircle } from 'lucide-react'
 
 export default function NewEntryPage(): React.JSX.Element {
   const { data: session, status } = useSession()
@@ -39,22 +38,11 @@ export default function NewEntryPage(): React.JSX.Element {
     setError('')
 
     try {
-      const response = await fetch('/api/entries', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-      })
+      // Use the entries service instead of direct fetch
+      await entriesService.createEntry(data)
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create entry')
-      }
-
-      // Redirect to the entries list
-      router.push('/client/entries')
+      // Redirect to the client dashboard
+      router.push('/client')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
@@ -67,28 +55,13 @@ export default function NewEntryPage(): React.JSX.Element {
       {/* Background Pattern */}
       <div className='absolute inset-0 bg-grid-slate-100 [mask-image:radial-gradient(ellipse_at_center,white,transparent)] opacity-20' />
       
-      <nav className='relative z-10 bg-white/80 backdrop-blur-sm shadow-sm border-b border-white/20'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='flex justify-between items-center h-16'>
-            <div className='flex items-center space-x-4'>
-              <Button variant="ghost" asChild>
-                <Link href='/client'>
-                  <ArrowLeft className='w-4 h-4 mr-2' />
-                  Back to Dashboard
-                </Link>
-              </Button>
-              <Heading as='h1' size='lg'>
-                New Journal Entry
-              </Heading>
-            </div>
-            <div className='flex items-center space-x-4'>
-              <Text size='sm' variant='muted'>
-                {getFullName(session.user.firstName, session.user.lastName)}
-              </Text>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <AppHeader
+        title="New Journal Entry"
+        backUrl="/client"
+        backText="Back to Dashboard"
+        user={session.user}
+        backgroundStyle="glass"
+      />
 
       <main className='relative z-10 max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8'>
         <div className='text-center mb-8'>

@@ -1,27 +1,37 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { EntryDetailLayout } from '@/components/entries/EntryDetailLayout'
+import { useRoleBasedAuth } from '@/hooks/useRoleBasedAuth'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import type { Tables } from '@/types/database'
-import { getFullName } from '@/lib/utils'
-
-type JournalEntry = Tables<'journal_entries'>
+import { entriesService, sharingService } from '@/services'
+import { Share, CheckCircle, AlertCircle } from 'lucide-react'
+import type { JournalEntry } from '@/types/database'
+import type { ProviderListResponse } from '@/types/api'
 
 interface ShareEntryPageProps {
   params: Promise<{ id: string }>
 }
 
-interface Provider {
-  id: string
-  name: string | null
-  email: string
-  role: string
+// Use the proper API response type from types/api.ts
+type Provider = ProviderListResponse
+
+// Helper function to format provider display name
+const formatProviderName = (provider: Provider): string => {
+  if (provider.firstName || provider.lastName) {
+    return `${provider.firstName || ''} ${provider.lastName || ''}`.trim()
+  }
+  return provider.email
 }
 
 export default function ShareEntryPage({ params }: ShareEntryPageProps): React.JSX.Element {
-  const { data: session, status } = useSession()
+  const { session, isLoading: authLoading, handleSignOut } = useRoleBasedAuth({ requiredRole: 'CLIENT' })
   const router = useRouter()
   const [entry, setEntry] = useState<JournalEntry | null>(null)
   const [providers, setProviders] = useState<Provider[]>([])
@@ -33,8 +43,8 @@ export default function ShareEntryPage({ params }: ShareEntryPageProps): React.J
 
   // Form state
   const [selectedProviderId, setSelectedProviderId] = useState('')
-  const [scope, setScope] = useState<'TITLE_ONLY' | 'SUMMARY_ONLY' | 'FULL_ACCESS'>('FULL_ACCESS')
   const [message, setMessage] = useState('')
+  // Always share with full access (handled on submit)
 
   useEffect(() => {
     params.then(resolvedParams => {
@@ -42,52 +52,35 @@ export default function ShareEntryPage({ params }: ShareEntryPageProps): React.J
     })
   }, [params])
 
-  useEffect(() => {
-    if (status === 'loading') return
-    
-    if (!session) {
-      router.push('/login')
-      return
-    }
-  }, [session, status, router])
 
-  const fetchEntry = async (): Promise<void> => {
+  const fetchEntry = useCallback(async (): Promise<void> => {
     if (!entryId) return
     
     try {
-      const response = await fetch(`/api/entries/${entryId}`)
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to fetch entry')
+      const entry = await entriesService.getEntryById(entryId)
+      if (!entry) {
+        throw new Error('Entry not found')
       }
-
-      setEntry(result.data)
+      setEntry(entry)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     }
-  }
+  }, [entryId])
 
-  const fetchProviders = async (): Promise<void> => {
+  const fetchProviders = useCallback(async (): Promise<void> => {
     try {
-      const response = await fetch('/api/providers')
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to fetch providers')
-      }
-
-      setProviders(result.data)
+      const providers = await sharingService.getProviders()
+      setProviders(providers as Provider[])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     }
-  }
+  }, [])
 
   useEffect(() => {
     if (entryId) {
       Promise.all([fetchEntry(), fetchProviders()]).finally(() => setIsLoading(false))
     }
-  }, [entryId])
+  }, [entryId, fetchEntry, fetchProviders])
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
@@ -96,24 +89,12 @@ export default function ShareEntryPage({ params }: ShareEntryPageProps): React.J
     setSuccess('')
 
     try {
-      const response = await fetch('/api/shares', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          entryId: entryId,
-          providerId: selectedProviderId,
-          scope,
-          message: message || undefined
-        })
+      await sharingService.createShare({
+        entryId: entryId!,
+        providerId: selectedProviderId,
+        scope: 'FULL_ACCESS',
+        message: message || undefined
       })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to share entry')
-      }
 
       setSuccess('Entry shared successfully!')
       setTimeout(() => {
@@ -126,193 +107,130 @@ export default function ShareEntryPage({ params }: ShareEntryPageProps): React.J
     }
   }
 
-  if (status === 'loading' || isLoading) {
-    return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600'></div>
-      </div>
-    )
-  }
-
-  if (!session) {
-    return <></>
-  }
-
   if (error && !entry) {
     return (
-      <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
-        <div className='bg-white rounded-lg shadow-sm p-8 text-center'>
-          <h2 className='text-xl font-semibold text-gray-900 mb-4'>Error Loading Entry</h2>
-          <p className='text-red-600 mb-6'>{error}</p>
-          <Link
-            href='/client/entries'
-            className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium'
-          >
-            Back to Entries
-          </Link>
-        </div>
-      </div>
+      <EntryDetailLayout
+        session={session}
+        isLoading={authLoading}
+        onSignOut={handleSignOut}
+        backUrl="/client"
+        backText="Back to Dashboard"
+        title="Error Loading Entry"
+      >
+        <Card className='shadow-lg border-0 bg-white/90 backdrop-blur-sm'>
+          <CardContent className='p-8 text-center'>
+            <h2 className='text-xl font-semibold text-gray-900 mb-4'>Error Loading Entry</h2>
+            <p className='text-red-600 mb-6'>{error}</p>
+          </CardContent>
+        </Card>
+      </EntryDetailLayout>
     )
   }
 
   if (!entry) {
     return (
-      <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
-        <div className='bg-white rounded-lg shadow-sm p-8 text-center'>
-          <h2 className='text-xl font-semibold text-gray-900 mb-4'>Entry Not Found</h2>
-          <p className='text-gray-600 mb-6'>The journal entry you&apos;re looking for could not be found.</p>
-          <Link
-            href='/client/entries'
-            className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium'
-          >
-            Back to Entries
-          </Link>
-        </div>
-      </div>
+      <EntryDetailLayout
+        session={session}
+        isLoading={authLoading || isLoading}
+        onSignOut={handleSignOut}
+        backUrl="/client"
+        backText="Back to Dashboard"
+        title="Entry Not Found"
+      >
+        <Card className='shadow-lg border-0 bg-white/90 backdrop-blur-sm'>
+          <CardContent className='p-8 text-center'>
+            <h2 className='text-xl font-semibold text-gray-900 mb-4'>Entry Not Found</h2>
+            <p className='text-gray-600 mb-6'>The journal entry you&apos;re looking for could not be found.</p>
+          </CardContent>
+        </Card>
+      </EntryDetailLayout>
     )
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <nav className='bg-white shadow-sm border-b'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='flex justify-between items-center h-16'>
-            <div className='flex items-center space-x-4'>
-              <Link 
-                href={`/client/entries/${entry.id}`}
-                className='text-blue-600 hover:text-blue-800 font-medium'
-              >
-                ← Back to Entry
-              </Link>
-              <h1 className='text-xl font-semibold text-gray-900'>
-                Share Entry: {entry.title}
-              </h1>
-            </div>
-            <div className='flex items-center space-x-4'>
-              <span className='text-sm text-gray-700'>
-                {getFullName(session.user.firstName, session.user.lastName)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className='max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8'>
-        <div className='bg-white rounded-lg shadow-sm p-6'>
-          <h2 className='text-lg font-semibold text-gray-900 mb-6'>Share Journal Entry</h2>
-          
+    <EntryDetailLayout
+      session={session}
+      isLoading={authLoading || isLoading}
+      onSignOut={handleSignOut}
+      backUrl={`/client/entries/${entry.id}`}
+      backText="Back to Entry"
+      title={`Share: ${entry.title}`}
+      description="Share this complete journal entry with your healthcare provider"
+    >
+      <Card className='shadow-lg border-0 bg-white/90 backdrop-blur-sm'>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Share className="w-5 h-5" />
+            Share Journal Entry
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           {error && (
-            <div className='mb-6 p-4 bg-red-50 border border-red-200 rounded-md'>
-              <p className='text-red-700'>{error}</p>
-            </div>
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           {success && (
-            <div className='mb-6 p-4 bg-green-50 border border-green-200 rounded-md'>
-              <p className='text-green-700'>{success}</p>
-            </div>
+            <Alert className="mb-6 border-green-200 bg-green-50">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-700">{success}</AlertDescription>
+            </Alert>
           )}
 
+          <div className="mb-6 p-4 bg-blue-50/80 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-800">
+              <strong>What will be shared:</strong> Your healthcare provider will receive access to the complete journal entry including all content, mood, tags, and metadata.
+            </p>
+          </div>
+
           <form onSubmit={handleSubmit} className='space-y-6'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-2'>
-                Share with Provider
-              </label>
-              <select
-                value={selectedProviderId}
-                onChange={e => setSelectedProviderId(e.target.value)}
-                required
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-              >
-                <option value=''>Select a healthcare provider...</option>
-                {providers.map(provider => (
-                  <option key={provider.id} value={provider.id}>
-                    {provider.name || provider.email} ({provider.role})
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-2">
+              <Label htmlFor="provider">Share with Provider</Label>
+              <Select value={selectedProviderId} onValueChange={setSelectedProviderId} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a healthcare provider..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {providers.map(provider => (
+                    <SelectItem key={provider.id} value={provider.id}>
+                      {formatProviderName(provider)} ({provider.role})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-2'>
-                Access Level
-              </label>
-              <div className='space-y-2'>
-                <label className='flex items-center'>
-                  <input
-                    type='radio'
-                    name='scope'
-                    value='FULL_ACCESS'
-                    checked={scope === 'FULL_ACCESS'}
-                    onChange={e => setScope(e.target.value as 'FULL_ACCESS')}
-                    className='mr-2'
-                  />
-                  <span className='text-sm'>
-                    <strong>Full Access</strong> - Provider can see the complete entry including content, mood, and tags
-                  </span>
-                </label>
-                <label className='flex items-center'>
-                  <input
-                    type='radio'
-                    name='scope'
-                    value='SUMMARY_ONLY'
-                    checked={scope === 'SUMMARY_ONLY'}
-                    onChange={e => setScope(e.target.value as 'SUMMARY_ONLY')}
-                    className='mr-2'
-                  />
-                  <span className='text-sm'>
-                    <strong>Summary Only</strong> - Provider can see title, AI summary, mood, and tags (no full content)
-                  </span>
-                </label>
-                <label className='flex items-center'>
-                  <input
-                    type='radio'
-                    name='scope'
-                    value='TITLE_ONLY'
-                    checked={scope === 'TITLE_ONLY'}
-                    onChange={e => setScope(e.target.value as 'TITLE_ONLY')}
-                    className='mr-2'
-                  />
-                  <span className='text-sm'>
-                    <strong>Title Only</strong> - Provider can only see the entry title and basic metadata
-                  </span>
-                </label>
-              </div>
-            </div>
 
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-2'>
-                Message to Provider (Optional)
-              </label>
-              <textarea
+            <div className="space-y-2">
+              <Label htmlFor="message">Message to Provider (Optional)</Label>
+              <Textarea
+                id="message"
                 value={message}
                 onChange={e => setMessage(e.target.value)}
                 rows={3}
                 maxLength={500}
                 placeholder='Add a note for your healthcare provider...'
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
               />
-              <p className='text-xs text-gray-500 mt-1'>{message.length}/500 characters</p>
+              <p className='text-xs text-gray-500'>{message.length}/500 characters</p>
             </div>
 
-            <div className='flex justify-end space-x-4'>
-              <Link
-                href={`/client/entries/${entry.id}`}
-                className='px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50'
-              >
-                Cancel
-              </Link>
-              <button
+            <div className='flex justify-end space-x-3'>
+              <Button variant="outline" type="button" asChild>
+                <a href={`/client/entries/${entry.id}`}>Cancel</a>
+              </Button>
+              <Button 
                 type='submit'
                 disabled={isSubmitting || !selectedProviderId}
-                className='px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                className='min-w-[120px]'
               >
                 {isSubmitting ? 'Sharing...' : 'Share Entry'}
-              </button>
+              </Button>
             </div>
           </form>
-        </div>
-      </main>
-    </div>
+        </CardContent>
+      </Card>
+    </EntryDetailLayout>
   )
 }

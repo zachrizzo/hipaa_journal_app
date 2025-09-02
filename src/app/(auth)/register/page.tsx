@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { z } from 'zod'
+import { authService } from '@/services'
 import { Button } from '@/components/ui/button'
 import { InputWithIcon } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -58,33 +59,18 @@ export default function RegisterPage(): React.JSX.Element {
     try {
       const validatedData = registerSchema.parse(form)
       
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: validatedData.firstName,
-          lastName: validatedData.lastName,
-          email: validatedData.email,
-          password: validatedData.password
-        })
+      await authService.register({
+        firstName: validatedData.firstName,
+        lastName: validatedData.lastName,
+        email: validatedData.email,
+        password: validatedData.password,
+        role: 'CLIENT' // Default role for registration
       })
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        setRegisterError(result.error || 'Registration failed')
-        setIsLoading(false)
-        return
-      }
-
-      if (result.success) {
-        setSuccessMessage('Registration successful! Redirecting to login...')
-        setTimeout(() => {
-          router.push('/login')
-        }, 2000)
-      }
+      setSuccessMessage('Registration successful! Redirecting to login...')
+      setTimeout(() => {
+        router.push('/login')
+      }, 2000)
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {}

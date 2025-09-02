@@ -5,10 +5,11 @@ import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { createAuditLog, getAuditContext } from '@/lib/security/audit'
 import { sanitizeHtml } from '@/lib/security/sanitize'
-import type { ApiResponse } from '@/types/api'
-import type { Tables, EntryStatus } from '@/types/database'
+import type { ApiResponse, EntriesListResponse } from '@/types/api'
+import type { Prisma } from '@prisma/client'
 
-type JournalEntry = Tables<'journal_entries'>
+
+
 
 const createEntrySchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters'),
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 }
 
 // Get user's journal entries
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<{ entries: JournalEntry[], total: number, page: number, totalPages: number }>>> {
+export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<EntriesListResponse>>> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -112,14 +113,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const { searchParams } = new URL(request.url)
     const { page, limit, status, search } = listEntriesSchema.parse(Object.fromEntries(searchParams))
 
-    const where: {
-      userId: string
-      status?: EntryStatus
-      OR?: Array<{
-        title?: { contains: string; mode: 'insensitive' | 'default' }
-        tags?: { hasSome: string[] }
-      }>
-    } = {
+    const where: Prisma.JournalEntryWhereInput = {
       userId: session.user.id
     }
 
@@ -133,6 +127,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         { tags: { hasSome: [search.toLowerCase()] } }
       ]
     }
+
+    // Debug logging
+    console.log('Search query:', { search, status, where })
 
     const [entries, total] = await Promise.all([
       db.journalEntry.findMany({
@@ -180,7 +177,19 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     return NextResponse.json({
       success: true,
       data: {
-        entries: entries as JournalEntry[],
+        entries: entries.map(entry => ({
+          id: entry.id,
+          title: entry.title,
+          status: entry.status,
+          mood: entry.mood,
+          tags: entry.tags,
+          wordCount: entry.wordCount,
+          createdAt: entry.createdAt.toISOString(),
+          updatedAt: entry.updatedAt.toISOString(),
+          publishedAt: entry.publishedAt?.toISOString() || null,
+          aiSummary: entry.aiSummary,
+          aiSummaryAt: entry.aiSummaryAt?.toISOString() || null
+        })),
         total,
         page,
         totalPages

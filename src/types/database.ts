@@ -5,8 +5,7 @@ export type { UserRole, ShareScope, EntryStatus, AuditAction }
 
 // All types are already exported above or defined below
 
-// Database table types
-export type Tables<T extends keyof typeof tableMap> = (typeof tableMap)[T]
+// Database table map for legacy compatibility - use direct imports instead
 export const tableMap = {
   users: {} as User,
   sessions: {} as Session,
@@ -17,37 +16,46 @@ export const tableMap = {
   system_config: {} as SystemConfig
 }
 
-export type UserWithSessions = User & {
+export interface UserWithSessionsData extends User {
   sessions: Session[]
 }
 
-export type UserWithEntries = User & {
+export interface UserWithEntriesData extends User {
   entries: JournalEntry[]
 }
 
-export type JournalEntryWithUser = JournalEntry & {
+export interface JournalEntryWithUserData extends JournalEntry {
   user: User
 }
 
-export type JournalEntryWithShares = JournalEntry & {
+export interface JournalEntryWithSharesData extends JournalEntry {
   shares: EntryShare[]
 }
 
-export type JournalEntryWithVersions = JournalEntry & {
+export interface JournalEntryWithVersionsData extends JournalEntry {
   versions: EntryVersion[]
 }
 
-export type EntryShareWithRelations = EntryShare & {
+export interface EntryShareWithRelationsData extends EntryShare {
   entry: JournalEntry
   provider: User
   client: User
 }
 
-export type AuditLogWithUser = AuditLog & {
+export interface AuditLogWithUserData extends AuditLog {
   user: User | null
 }
 
-export type SafeUser = Omit<User, 'hashedPassword' | 'mfaSecret'>
+export type SafeUserData = Omit<User, 'hashedPassword' | 'mfaSecret'>
+
+// Legacy compatibility - prefer direct imports
+export type Tables<T extends 'users'> = T extends 'users' ? User : 
+  T extends 'sessions' ? Session :
+  T extends 'journal_entries' ? JournalEntry :
+  T extends 'entry_versions' ? EntryVersion :
+  T extends 'entry_shares' ? EntryShare :
+  T extends 'audit_logs' ? AuditLog :
+  T extends 'system_config' ? SystemConfig : never
 
 export interface CreateUserInput {
   email: string

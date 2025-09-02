@@ -8,9 +8,7 @@ import { Text } from '@/components/ui/text'
 import { Heading } from '@/components/ui/heading'
 import { Button } from '@/components/ui/button'
 import { Calendar, Tag, PlusCircle, FileText } from 'lucide-react'
-import type { Tables } from '@/types/database'
-
-type JournalEntry = Tables<'journal_entries'>
+import type { JournalEntry } from '@/types/database'
 
 interface EntryGridProps {
   entries: JournalEntry[]
@@ -47,25 +45,31 @@ export function EntryGrid({ entries, isLoading, emptyStateConfig, entryUrlGenera
 
   if (entries.length === 0) {
     return (
-      <Card className='shadow-xl border-0 bg-white/90 backdrop-blur-sm'>
-        <CardContent className='p-12 text-center'>
-          <div className='mx-auto w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-6 opacity-50'>
-            <FileText className='w-10 h-10 text-white' />
-          </div>
-          <Heading as='h3' size='xl' className='mb-3'>
-            {emptyStateConfig.title}
-          </Heading>
-          <Text variant='muted' className='mb-6'>
-            {emptyStateConfig.description}
-          </Text>
-          <Button variant='gradient' size='lg' asChild>
-            <Link href={emptyStateConfig.actionHref}>
-              <PlusCircle className='w-5 h-5 mr-2' />
-              {emptyStateConfig.actionText}
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <div className='flex items-center justify-center py-16'>
+        <Card className='shadow-xl border-0 bg-white/90 backdrop-blur-sm max-w-3xl w-full'>
+          <CardContent className='px-8 py-14'>
+            <div className='mx-auto w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-6 opacity-60'>
+              <FileText className='w-8 h-8 text-white' />
+            </div>
+            <div className='max-w-xl mx-auto text-center space-y-5'>
+              <Heading as='h3' size='xl'>
+                {emptyStateConfig.title}
+              </Heading>
+              <Text variant='muted'>
+                {emptyStateConfig.description}
+              </Text>
+              <div className='pt-2'>
+                <Button variant='gradient' size='lg' asChild>
+                  <Link href={emptyStateConfig.actionHref}>
+                    <PlusCircle className='w-5 h-5 mr-2' />
+                    {emptyStateConfig.actionText}
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
@@ -97,14 +101,14 @@ export function EntryGrid({ entries, isLoading, emptyStateConfig, entryUrlGenera
               )}
               <div className='flex items-center justify-between text-sm'>
                 <div className='flex items-center space-x-2'>
-                  <Calendar className='w-4 h-4 text-gray-400' />
+                  <Calendar className='w-4 h-4 text-muted-foreground' />
                   <Text size='sm' variant='muted'>
                     {new Date(entry.createdAt).toLocaleDateString()}
                   </Text>
                 </div>
                 {entry.tags && entry.tags.length > 0 && (
                   <div className='flex items-center space-x-1'>
-                    <Tag className='w-4 h-4 text-gray-400' />
+                    <Tag className='w-4 h-4 text-muted-foreground' />
                     <Text size='sm' variant='muted'>
                       {entry.tags.length} {entry.tags.length === 1 ? 'tag' : 'tags'}
                     </Text>

@@ -3,8 +3,9 @@ import { hash } from 'bcryptjs'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { createAuditLog, getAuditContext } from '@/lib/security/audit'
-import type { ApiResponse, RegisterRequest } from '@/types/api'
+import type { ApiResponse } from '@/types/api'
 import type { UserRole } from '@/types/database'
+import type { Prisma } from '@prisma/client'
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -18,7 +19,7 @@ const registerSchema = z.object({
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<{ id: string }>>> {
   try {
-    const body: RegisterRequest = await request.json()
+    const body: Omit<Prisma.UserCreateInput, 'id' | 'createdAt' | 'updatedAt'> = await request.json()
     const validatedData = registerSchema.parse(body)
 
     // Check if user already exists

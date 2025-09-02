@@ -4,25 +4,17 @@ import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
 import { createShare, getSharesForProvider, getSharesForClient } from '@/lib/db/shares'
 import { getAuditContext } from '@/lib/security/audit'
-import type { ApiResponse, CreateShareRequest } from '@/types/api'
+import type { ApiResponse } from '@/types/api'
+import type { EntryShare } from '@/types/database'
+import type { Prisma } from '@prisma/client'
 
-interface TransformedShareData {
-  id: string
-  entryId: string
+interface TransformedShareDataExtensions {
   entryTitle: string
-  providerId: string
   providerName?: string | null
-  clientId: string
   clientName?: string | null
-  scope: string
-  message: string | null
-  expiresAt: string | null
-  isRevoked: boolean
-  revokedAt: string | null
-  revokedReason: string | null
-  createdAt: string
-  updatedAt: string
 }
+
+type TransformedShareData = EntryShare & TransformedShareDataExtensions
 
 const createShareSchema = z.object({
   entryId: z.string().cuid('Invalid entry ID'),
@@ -61,7 +53,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       )
     }
 
-    const body: CreateShareRequest = await request.json()
+    const body: Omit<Prisma.EntryShareCreateInput, 'id' | 'createdAt' | 'updatedAt' | 'isRevoked' | 'revokedAt' | 'revokedReason'> = await request.json()
     const validatedData = createShareSchema.parse(body)
 
     const context = getAuditContext(request, session.user.id)

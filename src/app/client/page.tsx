@@ -3,8 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Heading } from '@/components/ui/heading'
-import { Text } from '@/components/ui/text'
+import { PageHeader } from '@/components/ui/page-header'
 import { FileText, PlusCircle } from 'lucide-react'
 import { SearchBar } from '@/components/search/SearchBar'
 import { EntryGrid } from '@/components/entries/EntryGrid'
@@ -14,9 +13,14 @@ import { useEntries } from '@/hooks/useEntries'
 
 export default function ClientDashboard(): React.JSX.Element {
   const { session, isLoading, handleSignOut } = useRoleBasedAuth({ requiredRole: 'CLIENT' })
-  const { entries, isLoading: entriesLoading } = useEntries({ session, type: 'client' })
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'DRAFT' | 'PUBLISHED'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'>('all')
+  const { entries, isLoading: entriesLoading } = useEntries({
+    session,
+    type: 'client',
+    search: searchQuery,
+    status: statusFilter === 'all' ? undefined : statusFilter
+  })
 
   const headerActions = (
     <Button variant='gradient' size='sm' asChild>
@@ -33,28 +37,19 @@ export default function ClientDashboard(): React.JSX.Element {
       isLoading={isLoading}
       onSignOut={handleSignOut}
       title="HIPAA Journal"
-      gradientFrom="from-blue-600"
-      gradientTo="to-purple-600"
       icon={FileText}
       headerActions={headerActions}
     >
-      {/* Header Section */}
-      <div className='flex items-center justify-between mb-8'>
-        <div>
-          <Heading as='h1' size='3xl' variant='gradient' className='mb-2'>
-            Your Journal Entries
-          </Heading>
-          <Text size='lg' variant='muted'>
-            Document your thoughts, experiences, and professional insights
-          </Text>
-        </div>
-      </div>
+      <PageHeader
+        title="Your Journal Entries"
+        description="Document your thoughts, experiences, and professional insights"
+      />
 
       {/* Search and Filter Bar */}
       <SearchBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        statusFilter={statusFilter}
+        statusFilter={statusFilter as 'all' | 'DRAFT' | 'PUBLISHED'}
         onStatusFilterChange={setStatusFilter}
         placeholder='Search your entries...'
       />
