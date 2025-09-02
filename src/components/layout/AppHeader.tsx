@@ -1,6 +1,7 @@
 import { ReactNode } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { Heading } from '@/components/ui/heading'
 import { ArrowLeft } from 'lucide-react'
 
 interface AppHeaderProps {
@@ -37,9 +38,9 @@ export function AppHeader({
                 </Link>
               </Button>
             )}
-            <h1 className='text-xl font-semibold'>
+            <Heading as='h1' size='xl'>
               {title}
-            </h1>
+            </Heading>
           </div>
           <div className='flex items-center space-x-4'>
             {actions}

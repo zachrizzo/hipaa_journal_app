@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { createAuditLog, getAuditContext } from '@/lib/security/audit'
 import type { ApiResponse } from '@/types/api'
-import type { UserRole } from '@/types/database'
+import type { UserRole, User } from '@/types/database'
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -16,7 +16,7 @@ const registerSchema = z.object({
   role: z.enum(['CLIENT', 'PROVIDER']).optional()
 })
 
-export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<{ id: string }>>> {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<Pick<User, 'id'>>>> {
   try {
     const body = await request.json()
     const validatedData = registerSchema.parse(body)

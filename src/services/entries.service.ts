@@ -20,11 +20,8 @@ export interface EntriesListParams {
   search?: string
 }
 
-export interface EntriesListResult {
+export interface EntriesListResult extends Pick<EntriesListResponse, 'total' | 'page' | 'totalPages'> {
   entries: JournalEntry[]
-  total: number
-  page: number
-  totalPages: number
 }
 
 export class EntriesService {

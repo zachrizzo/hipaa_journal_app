@@ -4,25 +4,16 @@
  */
 
 import { apiClient } from '@/lib/api/client'
+import type { User, UserRole } from '@/types/database'
+import type { RegisterRequestParams, LoginRequestParams, LoginResponse as ApiLoginResponse } from '@/types/api'
 
-export interface RegisterData {
-  email: string
-  password: string
-  firstName?: string
-  lastName?: string
-  role?: 'CLIENT' | 'PROVIDER'
-}
+export type RegisterData = RegisterRequestParams
 
-export interface LoginData {
-  email: string
-  password: string
-}
+export type LoginData = LoginRequestParams
 
 export interface LoginResponse {
   token?: string
-  user?: {
-    id: string
-    email: string
+  user?: Pick<User, 'id' | 'email'> & {
     role: string
   }
 }

@@ -9,7 +9,7 @@ import type { ApiResponse } from '@/types/api'
 import type { JournalEntry } from '@/types/database'
 
 interface RouteParams {
-  params: Promise<{ id: string }>
+  params: Promise<Record<'id', string>>
 }
 
 const updateEntrySchema = z.object({

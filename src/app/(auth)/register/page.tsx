@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Text } from '@/components/ui/text'
 import { Heading } from '@/components/ui/heading'
 import { UserPlus, Mail, Lock, User, AlertCircle, Loader2 } from 'lucide-react'
-import { RegisterRequest } from '@/types/api'
+import { RegisterRequestParams } from '@/types/api'
 
 const registerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -30,8 +30,8 @@ const registerSchema = z.object({
   path: ["confirmPassword"],
 })
 
-// Extend the generated RegisterRequest type with confirmPassword for client-side validation
-interface RegisterForm extends RegisterRequest {
+// Extend the generated RegisterRequestParams type with confirmPassword for client-side validation
+interface RegisterForm extends RegisterRequestParams {
   confirmPassword: string
 }
 

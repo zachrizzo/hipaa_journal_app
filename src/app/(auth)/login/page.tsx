@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Text } from '@/components/ui/text'
 import { Heading } from '@/components/ui/heading'
 import { FileText, Mail, Lock, AlertCircle, Loader2, User, Stethoscope } from 'lucide-react'
-import { LoginRequest } from '@/types/api'
+import { LoginRequestParams } from '@/types/api'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -21,8 +21,8 @@ const loginSchema = z.object({
 })
 
 export default function LoginPage(): React.JSX.Element {
-  const [form, setForm] = useState<LoginRequest>({ email: '', password: '' })
-  const [errors, setErrors] = useState<Partial<LoginRequest>>({})
+  const [form, setForm] = useState<LoginRequestParams>({ email: '', password: '' })
+  const [errors, setErrors] = useState<Partial<LoginRequestParams>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [loginError, setLoginError] = useState('')
   const router = useRouter()
@@ -66,10 +66,10 @@ export default function LoginPage(): React.JSX.Element {
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const fieldErrors: Partial<LoginRequest> = {}
+        const fieldErrors: Partial<LoginRequestParams> = {}
         error.errors.forEach(err => {
           if (err.path[0]) {
-            fieldErrors[err.path[0] as keyof LoginRequest] = err.message
+            fieldErrors[err.path[0] as keyof LoginRequestParams] = err.message
           }
         })
         setErrors(fieldErrors)
@@ -78,9 +78,9 @@ export default function LoginPage(): React.JSX.Element {
     }
   }
 
-  const handleChange = (field: keyof LoginRequest) => (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleChange = (field: keyof LoginRequestParams) => (e: React.ChangeEvent<HTMLInputElement>): void => {
     setForm(prev => ({ ...prev, [field]: e.target.value }))
-    if (errors[field]) {
+    if (errors[field as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [field]: undefined }))
     }
   }

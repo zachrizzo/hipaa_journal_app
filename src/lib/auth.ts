@@ -3,7 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { compare } from 'bcryptjs'
 import { db } from '@/lib/db'
 import { createAuditLog, getAuditContext } from '@/lib/security/audit'
-import type { UserRole } from '@/types/database'
+import type { User } from '@/types/database'
 
 declare module 'next-auth' {
   interface User {
@@ -11,27 +11,19 @@ declare module 'next-auth' {
     email: string
     firstName: string | null
     lastName: string | null
-    role: UserRole
+    role: import('@/types/database').UserRole
   }
 
   interface Session {
-    user: {
-      id: string
-      email: string
-      firstName: string | null
-      lastName: string | null
-      role: UserRole
-    }
+    user: User
   }
 }
 
 declare module 'next-auth/jwt' {
-  interface JWT {
-    id: string
-    role: UserRole
-    email?: string | null
-    firstName?: string | null
-    lastName?: string | null
+  interface JWT extends Pick<import('@/types/database').User, 'id' | 'role'> {
+    email?: User['email'] | null
+    firstName?: User['firstName'] | null
+    lastName?: User['lastName'] | null
   }
 }
 

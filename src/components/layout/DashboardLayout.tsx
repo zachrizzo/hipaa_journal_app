@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Heading } from '@/components/ui/heading'
 import { Text } from '@/components/ui/text'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
+import { Separator } from '@/components/ui/separator'
 import { LogOut, LucideIcon } from 'lucide-react'
 import type { Session } from 'next-auth'
 
@@ -74,7 +75,7 @@ export function DashboardLayout({
             </div>
             <div className='flex items-center space-x-3'>
               {headerActions}
-              {headerActions && <div className='hidden sm:block h-6 w-px bg-gray-300' aria-hidden="true"></div>}
+              {headerActions && <Separator orientation="vertical" className='hidden sm:block h-6' aria-hidden="true" />}
               <Button
                 variant="outline"
                 size="sm"
@@ -82,7 +83,7 @@ export function DashboardLayout({
                 aria-label="Sign out of your account"
               >
                 <LogOut className='w-4 h-4' aria-hidden="true" />
-                <span className='hidden sm:inline ml-2'>Sign Out</span>
+                <Text as='span' className='hidden sm:inline ml-2'>Sign Out</Text>
               </Button>
             </div>
           </div>

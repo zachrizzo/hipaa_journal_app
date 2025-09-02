@@ -8,7 +8,7 @@ import { createAuditLog, getAuditContext } from '@/lib/security/audit'
 import type { ApiResponse, GenerateSummaryResponse } from '@/types/api'
 
 interface RouteParams {
-  params: Promise<{ id: string }>
+  params: Promise<Record<'id', string>>
 }
 
 const generateSummarySchema = z.object({

@@ -214,7 +214,7 @@ export default function ViewEntryPage({ params }: ViewEntryPageProps): React.JSX
           )}
 
           {deleteSuccess && (
-            <Alert className="mb-6 border-green-200 bg-green-50">
+            <Alert variant="success" className="mb-6">
               <AlertDescription>
                 <Text variant="success">{deleteSuccess}</Text>
               </AlertDescription>

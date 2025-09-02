@@ -7,7 +7,7 @@ import { getAuditContext } from '@/lib/security/audit'
 import type { ApiResponse } from '@/types/api'
 
 interface RouteParams {
-  params: Promise<{ id: string }>
+  params: Promise<Record<'id', string>>
 }
 
 const updateShareSchema = z.object({

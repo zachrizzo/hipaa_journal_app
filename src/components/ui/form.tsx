@@ -14,6 +14,7 @@ import {
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
+import { Text } from "@/components/ui/text"
 
 const Form = FormProvider
 
@@ -132,10 +133,13 @@ const FormDescription = React.forwardRef<
   const { formDescriptionId } = useFormField()
 
   return (
-    <p
+    <Text
+      as="p"
       ref={ref}
       id={formDescriptionId}
-      className={cn("text-sm text-muted-foreground", className)}
+      size="sm"
+      variant="muted"
+      className={className}
       {...props}
     />
   )
@@ -154,14 +158,18 @@ const FormMessage = React.forwardRef<
   }
 
   return (
-    <p
+    <Text
+      as="p"
       ref={ref}
       id={formMessageId}
-      className={cn("text-sm font-medium text-destructive", className)}
+      size="sm"
+      variant="destructive"
+      weight="medium"
+      className={className}
       {...props}
     >
       {body}
-    </p>
+    </Text>
   )
 })
 FormMessage.displayName = "FormMessage"

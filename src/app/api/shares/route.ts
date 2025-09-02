@@ -5,21 +5,15 @@ import { authOptions } from '@/lib/auth'
 import { createShare, getSharesForProvider, getSharesForClient } from '@/lib/db/shares'
 import { getAuditContext } from '@/lib/security/audit'
 import type { ApiResponse } from '@/types/api'
+import type { EntryShare } from '@/types/database'
 
-interface ShareResponseData {
-  id: string
-  entryId: string
+interface ShareResponseItem extends Pick<EntryShare, 
+  'id' | 'entryId' | 'providerId' | 'clientId' | 'scope' | 'message' | 'isRevoked' | 'revokedReason'> {
   entryTitle: string
-  providerId: string
   providerName?: string | null
-  clientId: string
   clientName?: string | null
-  scope: 'NONE' | 'TITLE_ONLY' | 'SUMMARY_ONLY' | 'FULL_ACCESS'
-  message: string | null
   expiresAt: string | null
-  isRevoked: boolean
   revokedAt: string | null
-  revokedReason: string | null
   createdAt: string
   updatedAt: string
 }
@@ -43,7 +37,7 @@ const listSharesSchema = z.object({
   includeExpired: z.boolean().default(false)
 })
 
-export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<{ id: string }>>> {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<Pick<EntryShare, 'id'>>>> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -107,7 +101,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
   }
 }
 
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<ShareResponseData[]>>> {
+export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<ShareResponseItem[]>>> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {

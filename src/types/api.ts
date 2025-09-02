@@ -1,4 +1,4 @@
-import type { UserRole, ShareScope, EntryStatus, AuditAction } from './database'
+import type { UserRole, ShareScope, EntryStatus, AuditAction, SafeUserData } from './database'
 
 export interface ApiResponse<T = unknown> {
   success: boolean
@@ -24,27 +24,19 @@ export interface PaginationResponse<T> {
 }
 
 // Auth API types
-export interface SessionUser {
-  id: string
-  email: string
-  firstName: string | null
-  lastName: string | null
-  role: UserRole
-}
-
-export interface LoginRequest {
+export interface LoginRequestParams {
   email: string
   password: string
   mfaCode?: string
 }
 
 export interface LoginResponse {
-  user: SessionUser
+  user: SafeUserData
   sessionToken: string
   expiresAt: string
 }
 
-export interface RegisterRequest {
+export interface RegisterRequestParams {
   email: string
   password: string
   firstName?: string
@@ -52,17 +44,17 @@ export interface RegisterRequest {
   role?: UserRole
 }
 
-export interface PasswordResetRequest {
+export interface PasswordResetRequestParams {
   email: string
 }
 
-export interface PasswordUpdateRequest {
+export interface PasswordUpdateRequestParams {
   currentPassword: string
   newPassword: string
 }
 
 // Entry API types
-export interface CreateEntryRequest {
+export interface CreateEntryRequestParams {
   title: string
   content: object
   status?: EntryStatus
@@ -70,7 +62,7 @@ export interface CreateEntryRequest {
   tags?: string[]
 }
 
-export interface UpdateEntryRequest {
+export interface UpdateEntryRequestParams {
   title?: string
   content?: object
   status?: EntryStatus
@@ -79,48 +71,27 @@ export interface UpdateEntryRequest {
   changeReason?: string
 }
 
-export interface EntryListResponse {
-  id: string
-  title: string
-  status: EntryStatus
-  mood: number | null
-  tags: string[]
-  wordCount: number
+export interface EntryListResponse extends Pick<JournalEntry, 
+  'id' | 'title' | 'status' | 'mood' | 'tags' | 'wordCount' | 'aiSummary'> {
   createdAt: string
   updatedAt: string
   publishedAt: string | null
-  aiSummary: string | null
   aiSummaryAt: string | null
 }
 
-export interface EntryDetailResponse {
-  id: string
-  title: string
-  content: object
-  contentHtml: string | null
-  status: EntryStatus
-  mood: number | null
-  tags: string[]
-  aiSummary: string | null
+export interface EntryDetailResponse extends Pick<JournalEntry,
+  'id' | 'title' | 'content' | 'contentHtml' | 'status' | 'mood' | 'tags' | 'aiSummary' | 'wordCount'> {
   aiSummaryAt: string | null
-  wordCount: number
   createdAt: string
   updatedAt: string
   publishedAt: string | null
-  versions: {
-    id: string
-    versionNumber: number
-    title: string
-    changeReason: string | null
+  versions: Array<Pick<EntryVersion, 'id' | 'versionNumber' | 'title' | 'changeReason'> & {
     createdAt: string
-  }[]
-  shares: {
-    id: string
-    clientId: string
+  }>
+  shares: Array<Pick<EntryShare, 'id' | 'clientId' | 'scope'> & {
     clientName: string | null
-    scope: ShareScope
     createdAt: string
-  }[]
+  }>
 }
 
 export interface EntriesListResponse {
@@ -131,7 +102,7 @@ export interface EntriesListResponse {
 }
 
 // Share API types
-export interface CreateShareRequest {
+export interface CreateShareRequestParams {
   entryId: string
   providerId: string
   scope: ShareScope
@@ -139,73 +110,54 @@ export interface CreateShareRequest {
   expiresAt?: string
 }
 
-export interface UpdateShareRequest {
+export interface UpdateShareRequestParams {
   scope?: ShareScope
   expiresAt?: string
 }
 
-export interface ShareListResponse {
-  id: string
-  entryId: string
+export interface ShareListResponse extends Pick<EntryShare, 'id' | 'entryId' | 'scope' | 'message'> {
   entryTitle: string
   providerName: string | null
   clientName: string | null
-  scope: ShareScope
-  message: string | null
   expiresAt: string | null
   createdAt: string
 }
 
 // User API types
-export interface UserListResponse {
-  id: string
-  email: string
-  firstName: string | null
-  lastName: string | null
-  role: UserRole
-  isActive: boolean
+export interface UserListResponse extends Pick<User,
+  'id' | 'email' | 'firstName' | 'lastName' | 'role' | 'isActive'> {
   lastLoginAt: string | null
   createdAt: string
 }
 
-export interface ProviderListResponse {
-  id: string
-  firstName: string | null
-  lastName: string | null
-  email: string
+export interface ProviderListResponse extends Pick<User,
+  'id' | 'firstName' | 'lastName' | 'email'> {
   role: string
 }
 
-export interface CreateUserRequest {
-  email: string
-  firstName?: string
-  lastName?: string
-  role: UserRole
+export interface CreateUserRequestParams extends Pick<User, 'email' | 'role'> {
+  firstName?: User['firstName']
+  lastName?: User['lastName']
   sendInvite?: boolean
 }
 
 // Audit API types
-export interface AuditLogResponse {
-  id: string
-  action: AuditAction
-  resource: string
-  resourceId: string | null
+export interface AuditLogResponse extends Pick<AuditLog,
+  'id' | 'action' | 'resource' | 'resourceId' | 'ipAddress' | 'details'> {
   userEmail: string | null
-  ipAddress: string | null
-  details: object | null
   createdAt: string
 }
 
 export interface AuditLogFilters {
-  action?: AuditAction
-  resource?: string
-  userId?: string
+  action?: AuditLog['action']
+  resource?: AuditLog['resource']
+  userId?: AuditLog['userId']
   startDate?: string
   endDate?: string
 }
 
 // AI API types
-export interface GenerateSummaryRequest {
+export interface GenerateSummaryRequestParams {
   entryId: string
   forceRegenerate?: boolean
 }

@@ -16,12 +16,9 @@ interface ViewSharedEntryPageProps {
   params: Promise<{ id: string }>
 }
 
-// Use generated type instead of manual interface
-type SharedEntryData = EntryShareWithRelationsData
-
 export default function ViewSharedEntryPage({ params }: ViewSharedEntryPageProps): React.JSX.Element {
   const { session, isLoading: authLoading, handleSignOut } = useRoleBasedAuth({ requiredRole: 'PROVIDER' })
-  const [shareData, setShareData] = useState<SharedEntryData | null>(null)
+  const [shareData, setShareData] = useState<EntryShareWithRelationsData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [shareId, setShareId] = useState<string | null>(null)

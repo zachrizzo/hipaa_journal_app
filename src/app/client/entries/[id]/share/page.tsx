@@ -20,11 +20,8 @@ interface ShareEntryPageProps {
   params: Promise<{ id: string }>
 }
 
-// Use the proper API response type from types/api.ts
-type Provider = ProviderListResponse
-
 // Helper function to format provider display name
-const formatProviderName = (provider: Provider): string => {
+const formatProviderName = (provider: ProviderListResponse): string => {
   if (provider.firstName || provider.lastName) {
     return `${provider.firstName || ''} ${provider.lastName || ''}`.trim()
   }
@@ -35,7 +32,7 @@ export default function ShareEntryPage({ params }: ShareEntryPageProps): React.J
   const { session, isLoading: authLoading, handleSignOut } = useRoleBasedAuth({ requiredRole: 'CLIENT' })
   const router = useRouter()
   const [entry, setEntry] = useState<JournalEntry | null>(null)
-  const [providers, setProviders] = useState<Provider[]>([])
+  const [providers, setProviders] = useState<ProviderListResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -71,7 +68,7 @@ export default function ShareEntryPage({ params }: ShareEntryPageProps): React.J
   const fetchProviders = useCallback(async (): Promise<void> => {
     try {
       const providers = await sharingService.getProviders()
-      setProviders(providers as Provider[])
+      setProviders(providers as ProviderListResponse[])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     }
@@ -185,8 +182,8 @@ export default function ShareEntryPage({ params }: ShareEntryPageProps): React.J
           )}
 
           {success && (
-            <Alert className="mb-6 border-green-200 bg-green-50">
-              <CheckCircle className="h-4 w-4 text-green-600" />
+            <Alert variant="success" className="mb-6">
+              <CheckCircle className="h-4 w-4" />
               <AlertDescription>
                 <Text variant="success">{success}</Text>
               </AlertDescription>

@@ -32,7 +32,7 @@ export function SearchBar({
         <div className='flex flex-col sm:flex-row gap-4 items-stretch sm:items-center'>
           <div className='flex-1'>
             <div className='relative'>
-              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
+              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4' />
               <Input
                 placeholder={placeholder}
                 value={searchQuery}
@@ -42,7 +42,7 @@ export function SearchBar({
             </div>
           </div>
           <div className='flex items-center space-x-3 sm:flex-shrink-0'>
-            <Filter className='w-4 h-4 text-gray-500' />
+            <Filter className='w-4 h-4 text-muted-foreground' />
             <Select value={statusFilter} onValueChange={onStatusFilterChange}>
               <SelectTrigger className='w-36 h-11'>
                 <SelectValue />

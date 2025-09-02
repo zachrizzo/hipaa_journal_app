@@ -7,6 +7,7 @@ import { createAuditLog, getAuditContext } from '@/lib/security/audit'
 import { sanitizeHtml } from '@/lib/security/sanitize'
 import type { ApiResponse, EntriesListResponse } from '@/types/api'
 import type { Prisma } from '@prisma/client'
+import type { JournalEntry } from '@/types/database'
 
 
 
@@ -27,7 +28,7 @@ const listEntriesSchema = z.object({
 })
 
 // Create a new journal entry
-export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<{ id: string }>>> {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<Pick<JournalEntry, 'id'>>>> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {

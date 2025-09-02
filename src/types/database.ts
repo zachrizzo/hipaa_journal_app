@@ -46,39 +46,34 @@ export interface AuditLogWithUserData extends AuditLog {
   user: User | null
 }
 
+// Safe user data without sensitive fields - using type alias as it's a utility type
 export type SafeUserData = Omit<User, 'hashedPassword' | 'mfaSecret'>
 
-export interface CreateUserInput {
-  email: string
-  firstName?: string | null
-  lastName?: string | null
+export interface CreateUserInput extends Pick<User, 'email'> {
+  firstName?: User['firstName']
+  lastName?: User['lastName']
   role?: UserRole
   password?: string
 }
 
-export interface CreateEntryInput {
-  title: string
-  content: object
+export interface CreateEntryInput extends Pick<JournalEntry, 'title' | 'content'> {
   status?: EntryStatus
-  mood?: number
-  tags?: string[]
+  mood?: JournalEntry['mood']
+  tags?: JournalEntry['tags']
 }
 
 export interface UpdateEntryInput {
-  title?: string
-  content?: object
+  title?: JournalEntry['title']
+  content?: JournalEntry['content']
   status?: EntryStatus
-  mood?: number
-  tags?: string[]
-  changeReason?: string
+  mood?: JournalEntry['mood']
+  tags?: JournalEntry['tags']
+  changeReason?: EntryVersion['changeReason']
 }
 
-export interface CreateShareInput {
-  entryId: string
-  providerId: string
-  scope: ShareScope
-  message?: string
-  expiresAt?: Date
+export interface CreateShareInput extends Pick<EntryShare, 'entryId' | 'providerId' | 'scope'> {
+  message?: EntryShare['message']
+  expiresAt?: EntryShare['expiresAt']
 }
 
 export interface AuditContext {

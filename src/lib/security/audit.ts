@@ -2,7 +2,7 @@ import type { AuditAction, AuditContext, AuditLog } from '@/types/database'
 import { db } from '@/lib/db'
 
 // Use generated type but omit auto-generated fields and make optional fields truly optional
-export type AuditLogData = Omit<AuditLog, 'id' | 'createdAt' | 'userId' | 'ipAddress' | 'userAgent' | 'sessionId' | 'details' | 'entryId' | 'shareId' | 'resourceId'> & {
+export interface AuditLogData extends Omit<AuditLog, 'id' | 'createdAt' | 'userId' | 'ipAddress' | 'userAgent' | 'sessionId' | 'details' | 'entryId' | 'shareId' | 'resourceId'> {
   entryId?: string | null
   shareId?: string | null
   resourceId?: string | null

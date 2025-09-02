@@ -6,7 +6,10 @@ import type {
   ShareScope,
   CreateShareInput,
   AuditContext,
-  EntryShareWithRelationsData
+  EntryShareWithRelationsData,
+  User,
+  JournalEntry,
+  AuditLog
 } from '@/types/database'
 
 export async function createShare(
@@ -376,7 +379,7 @@ export async function getShareById(
 
 export async function getAvailableProviders(
   clientId: string
-): Promise<Array<{ id: string; firstName: string | null; lastName: string | null; email: string; role: string }>> {
+): Promise<Array<Pick<User, 'id' | 'firstName' | 'lastName' | 'email'> & { role: string }>> {
   // Get users who can receive shares from clients (providers and admins)
   const users = await db.user.findMany({
     where: {
@@ -403,7 +406,7 @@ export async function getAvailableProviders(
 
 export async function getAvailableClients(
   providerId: string
-): Promise<Array<{ id: string; firstName: string | null; lastName: string | null; email: string; role: string }>> {
+): Promise<Array<Pick<User, 'id' | 'firstName' | 'lastName' | 'email'> & { role: string }>> {
   // Get users who can receive shares (clients and other providers)
   const users = await db.user.findMany({
     where: {
@@ -428,21 +431,23 @@ export async function getAvailableClients(
   return users
 }
 
-export async function getShareStatistics(
-  providerId: string
-): Promise<{
+interface ShareStatisticsResult {
   totalShares: number
   activeShares: number
   expiredShares: number
   revokedShares: number
   sharesByScope: Record<ShareScope, number>
   recentActivity: Array<{
-    action: string
-    entryTitle: string
-    clientName: string | null
+    action: AuditLog['action']
+    entryTitle: JournalEntry['title']
+    clientName: User['firstName'] | null
     createdAt: Date
   }>
-}> {
+}
+
+export async function getShareStatistics(
+  providerId: string
+): Promise<ShareStatisticsResult> {
   const [
     totalShares,
     activeShares,

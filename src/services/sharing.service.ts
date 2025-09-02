@@ -5,16 +5,10 @@
  */
 
 import { apiClient } from '@/lib/api/client'
-import type { ShareListResponse, ProviderListResponse } from '@/types/api'
-import type { JournalEntry, EntryStatus, EntryShare, EntryShareWithRelationsData } from '@/types/database'
+import type { ShareListResponse, ProviderListResponse, CreateShareRequestParams } from '@/types/api'
+import type { JournalEntry, EntryStatus, EntryShare, EntryShareWithRelationsData, ShareScope } from '@/types/database'
 
-export interface CreateShareData {
-  entryId: string
-  providerId: string
-  scope: 'NONE' | 'TITLE_ONLY' | 'SUMMARY_ONLY' | 'FULL_ACCESS'
-  message?: string
-  expiresAt?: string
-}
+export type CreateShareData = CreateShareRequestParams
 
 export interface ShareFilters {
   type?: 'provided' | 'received'
@@ -23,10 +17,10 @@ export interface ShareFilters {
 }
 
 export interface SharedEntry extends JournalEntry {
-  shareId: string
+  shareId: EntryShare['id']
   clientName?: string
-  shareScope: string
-  shareMessage?: string
+  shareScope: ShareScope
+  shareMessage?: EntryShare['message']
   sharedAt: string
 }
 
