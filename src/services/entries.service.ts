@@ -4,7 +4,7 @@
  * Handles data validation, transformation, and coordination with repositories
  */
 
-import { apiClient, ApiResponse } from '@/lib/api/client'
+import { apiClient } from '@/lib/api/client'
 import type {
   JournalEntry,
   CreateEntryInput,

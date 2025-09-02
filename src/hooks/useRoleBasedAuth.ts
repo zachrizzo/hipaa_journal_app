@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 interface UseRoleBasedAuthProps {
-  requiredRole: 'CLIENT' | 'PROVIDER' | 'ADMIN'
+  requiredRole: 'CLIENT' | 'PROVIDER'
   redirectOnWrongRole?: boolean
 }
 
@@ -24,9 +24,6 @@ export function useRoleBasedAuth({ requiredRole, redirectOnWrongRole = true }: U
     if (redirectOnWrongRole && session.user.role !== requiredRole) {
       // Redirect to appropriate dashboard based on role
       switch (session.user.role) {
-        case 'ADMIN':
-          router.push('/admin')
-          break
         case 'PROVIDER':
           router.push('/provider')
           break

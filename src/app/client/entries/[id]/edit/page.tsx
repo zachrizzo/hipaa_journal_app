@@ -7,7 +7,9 @@ import { EntryDetailLayout } from '@/components/entries/EntryDetailLayout'
 import { useRoleBasedAuth } from '@/hooks/useRoleBasedAuth'
 import { entriesService } from '@/services'
 import { Card, CardContent } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
+import { Text } from '@/components/ui/text'
+import { Heading } from '@/components/ui/heading'
 import { AlertCircle, Edit } from 'lucide-react'
 import type { JournalEntry, CreateEntryInput } from '@/types/database'
 
@@ -83,9 +85,11 @@ export default function EditEntryPage({ params }: EditEntryPageProps): React.JSX
         title="Error Loading Entry"
       >
         <Card className='shadow-lg border-0 bg-white/90 backdrop-blur-sm'>
-          <CardContent className='p-8 text-center'>
-            <h2 className='text-xl font-semibold text-gray-900 mb-4'>Error Loading Entry</h2>
-            <p className='text-red-600 mb-6'>{error}</p>
+          <CardContent className='p-8'>
+            <Alert variant="destructive">
+              <AlertTitle>Error Loading Entry</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           </CardContent>
         </Card>
       </EntryDetailLayout>
@@ -100,12 +104,21 @@ export default function EditEntryPage({ params }: EditEntryPageProps): React.JSX
         onSignOut={handleSignOut}
         backUrl="/client"
         backText="Back to Dashboard"
-        title="Entry Not Found"
+        title={isLoading ? "Loading..." : "Entry Not Found"}
       >
         <Card className='shadow-lg border-0 bg-white/90 backdrop-blur-sm'>
-          <CardContent className='p-8 text-center'>
-            <h2 className='text-xl font-semibold text-gray-900 mb-4'>Entry Not Found</h2>
-            <p className='text-gray-600 mb-6'>The journal entry you&apos;re looking for could not be found.</p>
+          <CardContent className='p-8'>
+            {isLoading ? (
+              <Alert>
+                <AlertTitle>Loading Entry...</AlertTitle>
+                <AlertDescription>Please wait while we fetch your journal entry.</AlertDescription>
+              </Alert>
+            ) : (
+              <Alert variant="destructive">
+                <AlertTitle>Entry Not Found</AlertTitle>
+                <AlertDescription>The journal entry you&apos;re looking for could not be found.</AlertDescription>
+              </Alert>
+            )}
           </CardContent>
         </Card>
       </EntryDetailLayout>
@@ -129,12 +142,12 @@ export default function EditEntryPage({ params }: EditEntryPageProps): React.JSX
               <AlertCircle className='h-4 w-4' />
               <AlertDescription>
                 <div>
-                  <div className='font-semibold mb-1'>
+                  <Text size="default" variant="default" className='font-semibold mb-1'>
                     Error updating entry
-                  </div>
-                  <div className='text-sm'>
+                  </Text>
+                  <Text size="sm" variant="default">
                     {error}
-                  </div>
+                  </Text>
                 </div>
               </AlertDescription>
             </Alert>
@@ -144,8 +157,8 @@ export default function EditEntryPage({ params }: EditEntryPageProps): React.JSX
             <div className='mx-auto w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mb-4 shadow-lg'>
               <Edit className='w-6 h-6 text-white' />
             </div>
-            <h2 className='text-xl font-semibold text-gray-900 mb-2'>Edit Journal Entry</h2>
-            <p className='text-gray-600'>Update your thoughts, feelings, and experiences</p>
+            <Heading size="xl" variant="default" as="h2" className='mb-2'>Edit Journal Entry</Heading>
+            <Text size="default" variant="muted">Update your thoughts, feelings, and experiences</Text>
           </div>
 
           <JournalEntryForm

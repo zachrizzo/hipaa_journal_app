@@ -19,24 +19,21 @@ export type {
   AuditAction,
 
   // Composite types
-  UserWithSessions,
-  UserWithEntries,
-  JournalEntryWithUser,
-  JournalEntryWithShares,
-  JournalEntryWithVersions,
-  EntryShareWithRelations,
-  AuditLogWithUser,
-  SafeUser,
+  UserWithSessionsData,
+  UserWithEntriesData,
+  JournalEntryWithUserData,
+  JournalEntryWithSharesData,
+  JournalEntryWithVersionsData,
+  EntryShareWithRelationsData,
+  AuditLogWithUserData,
+  SafeUserData,
 
   // Input interfaces
   CreateUserInput,
   CreateEntryInput,
   UpdateEntryInput,
   CreateShareInput,
-  AuditContext,
-
-  // Utility types
-  Tables
+  AuditContext
 } from './database'
 
 // API types

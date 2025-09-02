@@ -5,7 +5,6 @@ import { db } from '@/lib/db'
 import { createAuditLog, getAuditContext } from '@/lib/security/audit'
 import type { ApiResponse } from '@/types/api'
 import type { UserRole } from '@/types/database'
-import type { Prisma } from '@prisma/client'
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -14,12 +13,12 @@ const registerSchema = z.object({
       'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character'),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
-  role: z.enum(['CLIENT', 'PROVIDER', 'ADMIN']).optional()
+  role: z.enum(['CLIENT', 'PROVIDER']).optional()
 })
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<{ id: string }>>> {
   try {
-    const body: Omit<Prisma.UserCreateInput, 'id' | 'createdAt' | 'updatedAt'> = await request.json()
+    const body = await request.json()
     const validatedData = registerSchema.parse(body)
 
     // Check if user already exists

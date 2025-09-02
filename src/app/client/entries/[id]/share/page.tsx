@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
+import { Text } from '@/components/ui/text'
 import { EntryDetailLayout } from '@/components/entries/EntryDetailLayout'
 import { useRoleBasedAuth } from '@/hooks/useRoleBasedAuth'
 import { useRouter } from 'next/navigation'
@@ -99,7 +100,7 @@ export default function ShareEntryPage({ params }: ShareEntryPageProps): React.J
       setSuccess('Entry shared successfully!')
       setTimeout(() => {
         router.push(`/client/entries/${entryId}`)
-      }, 2000)
+      }, 1000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
@@ -118,9 +119,11 @@ export default function ShareEntryPage({ params }: ShareEntryPageProps): React.J
         title="Error Loading Entry"
       >
         <Card className='shadow-lg border-0 bg-white/90 backdrop-blur-sm'>
-          <CardContent className='p-8 text-center'>
-            <h2 className='text-xl font-semibold text-gray-900 mb-4'>Error Loading Entry</h2>
-            <p className='text-red-600 mb-6'>{error}</p>
+          <CardContent className='p-8'>
+            <Alert variant="destructive">
+              <AlertTitle>Error Loading Entry</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           </CardContent>
         </Card>
       </EntryDetailLayout>
@@ -135,12 +138,21 @@ export default function ShareEntryPage({ params }: ShareEntryPageProps): React.J
         onSignOut={handleSignOut}
         backUrl="/client"
         backText="Back to Dashboard"
-        title="Entry Not Found"
+        title={isLoading ? "Loading..." : "Entry Not Found"}
       >
         <Card className='shadow-lg border-0 bg-white/90 backdrop-blur-sm'>
-          <CardContent className='p-8 text-center'>
-            <h2 className='text-xl font-semibold text-gray-900 mb-4'>Entry Not Found</h2>
-            <p className='text-gray-600 mb-6'>The journal entry you&apos;re looking for could not be found.</p>
+          <CardContent className='p-8'>
+            {isLoading ? (
+              <Alert>
+                <AlertTitle>Loading Entry...</AlertTitle>
+                <AlertDescription>Please wait while we fetch your journal entry.</AlertDescription>
+              </Alert>
+            ) : (
+              <Alert variant="destructive">
+                <AlertTitle>Entry Not Found</AlertTitle>
+                <AlertDescription>The journal entry you&apos;re looking for could not be found.</AlertDescription>
+              </Alert>
+            )}
           </CardContent>
         </Card>
       </EntryDetailLayout>
@@ -175,14 +187,16 @@ export default function ShareEntryPage({ params }: ShareEntryPageProps): React.J
           {success && (
             <Alert className="mb-6 border-green-200 bg-green-50">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-700">{success}</AlertDescription>
+              <AlertDescription>
+                <Text variant="success">{success}</Text>
+              </AlertDescription>
             </Alert>
           )}
 
-          <div className="mb-6 p-4 bg-blue-50/80 rounded-lg border border-blue-200">
-            <p className="text-sm text-blue-800">
+          <div className="mb-6 p-4 bg-primary/5 rounded-lg border border-primary/20">
+            <Text size="sm" variant="primary">
               <strong>What will be shared:</strong> Your healthcare provider will receive access to the complete journal entry including all content, mood, tags, and metadata.
-            </p>
+            </Text>
           </div>
 
           <form onSubmit={handleSubmit} className='space-y-6'>
@@ -213,7 +227,7 @@ export default function ShareEntryPage({ params }: ShareEntryPageProps): React.J
                 maxLength={500}
                 placeholder='Add a note for your healthcare provider...'
               />
-              <p className='text-xs text-gray-500'>{message.length}/500 characters</p>
+              <Text size="xs" variant="muted">{message.length}/500 characters</Text>
             </div>
 
             <div className='flex justify-end space-x-3'>

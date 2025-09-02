@@ -6,7 +6,7 @@ import type {
   ShareScope,
   CreateShareInput,
   AuditContext,
-  EntryShareWithRelations
+  EntryShareWithRelationsData
 } from '@/types/database'
 
 export async function createShare(
@@ -31,7 +31,7 @@ export async function createShare(
     where: { id: data.providerId }
   })
 
-  if (!provider || !provider.isActive || !['PROVIDER', 'ADMIN'].includes(provider.role)) {
+  if (!provider || !provider.isActive || provider.role !== 'PROVIDER') {
     throw new Error('Provider not found, inactive, or invalid role')
   }
 
@@ -96,7 +96,7 @@ export async function getSharesForProvider(
     limit?: number
     offset?: number
   } = {}
-): Promise<EntryShareWithRelations[]> {
+): Promise<EntryShareWithRelationsData[]> {
   const {
     entryId,
     clientId,
@@ -148,7 +148,7 @@ export async function getSharesForProvider(
     context
   )
   
-  return shares as EntryShareWithRelations[]
+  return shares as EntryShareWithRelationsData[]
 }
 
 export async function getSharesForClient(
@@ -160,7 +160,7 @@ export async function getSharesForClient(
     limit?: number
     offset?: number
   } = {}
-): Promise<EntryShareWithRelations[]> {
+): Promise<EntryShareWithRelationsData[]> {
   const {
     providerId,
     includeExpired = false,
@@ -222,7 +222,7 @@ export async function getSharesForClient(
     context
   )
   
-  return shares as EntryShareWithRelations[]
+  return shares as EntryShareWithRelationsData[]
 }
 
 export async function updateShare(
@@ -307,7 +307,7 @@ export async function getShareById(
   shareId: string,
   userId: string,
   context: AuditContext
-): Promise<EntryShareWithRelations | null> {
+): Promise<EntryShareWithRelationsData | null> {
   const share = await db.entryShare.findFirst({
     where: {
       id: shareId,
@@ -371,7 +371,7 @@ export async function getShareById(
     scope: share.scope
   })
 
-  return share as EntryShareWithRelations
+  return share as EntryShareWithRelationsData
 }
 
 export async function getAvailableProviders(
@@ -382,7 +382,7 @@ export async function getAvailableProviders(
     where: {
       id: { not: clientId },
       isActive: true,
-      role: { in: ['PROVIDER', 'ADMIN'] }
+      role: 'PROVIDER'
     },
     select: {
       id: true,

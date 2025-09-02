@@ -37,15 +37,11 @@ export default withAuth(
     const { pathname } = req.nextUrl
 
     // Role-based access control
-    if (pathname.startsWith('/admin') && token?.role !== 'ADMIN') {
+    if (pathname.startsWith('/provider') && token?.role !== 'PROVIDER') {
       return NextResponse.redirect(new URL('/unauthorized', req.url))
     }
 
-    if (pathname.startsWith('/provider') && !['PROVIDER', 'ADMIN'].includes(token?.role as string)) {
-      return NextResponse.redirect(new URL('/unauthorized', req.url))
-    }
-
-    if (pathname.startsWith('/client') && !['CLIENT', 'PROVIDER', 'ADMIN'].includes(token?.role as string)) {
+    if (pathname.startsWith('/client') && !['CLIENT', 'PROVIDER'].includes(token?.role as string)) {
       return NextResponse.redirect(new URL('/unauthorized', req.url))
     }
 
@@ -72,7 +68,7 @@ export default withAuth(
 
         // Require authentication for dashboard routes
         if (pathname.startsWith('/dashboard') || pathname.startsWith('/client') || 
-            pathname.startsWith('/provider') || pathname.startsWith('/admin')) {
+            pathname.startsWith('/provider')) {
           return !!token
         }
 
@@ -88,7 +84,6 @@ export const config = {
     '/api/:path*',
     '/dashboard/:path*',
     '/client/:path*',
-    '/provider/:path*',
-    '/admin/:path*'
+    '/provider/:path*'
   ]
 }

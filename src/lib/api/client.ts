@@ -86,5 +86,4 @@ class ApiClient {
 
 export const apiClient = new ApiClient()
 
-// Export error class for type checking
-export { ApiError }
+// ApiError is already exported above with the class declaration

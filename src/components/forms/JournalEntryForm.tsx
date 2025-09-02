@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Text } from '@/components/ui/text'
 import type { CreateEntryInput, EntryStatus } from '@/types/database'
 
 interface JournalEntryFormProps {
@@ -118,7 +119,9 @@ export function JournalEntryForm({
               maxLength={200}
             />
             {errors.title && (
-              <p className='text-sm text-destructive'>{errors.title}</p>
+              <Text variant="destructive" size="sm">
+                {errors.title}
+              </Text>
             )}
           </div>
 
@@ -134,7 +137,9 @@ export function JournalEntryForm({
               placeholder='Write about your day, thoughts, feelings...'
             />
             {errors.content && (
-              <p className='text-sm text-destructive'>{errors.content}</p>
+              <Text variant="destructive" size="sm">
+                {errors.content}
+              </Text>
             )}
           </div>
 
@@ -145,7 +150,7 @@ export function JournalEntryForm({
             </Label>
             <div className='space-y-2'>
               <div className='flex items-center space-x-2'>
-                <input
+                <Input
                   type='range'
                   min='1'
                   max='10'
@@ -153,18 +158,27 @@ export function JournalEntryForm({
                   onChange={e => setFormData(prev => ({ ...prev, mood: parseInt(e.target.value) }))}
                   className='flex-1'
                   disabled={isSubmitting}
+                  aria-label="Mood rating from 1 to 10"
+                  aria-valuemin={1}
+                  aria-valuemax={10}
+                  aria-valuenow={formData.mood || 5}
+                  aria-valuetext={`Mood: ${formData.mood || 5}/10 - ${moodLabels[(formData.mood || 5) - 1]}`}
                 />
-                <span className='text-2xl'>{moodEmojis[(formData.mood || 5) - 1]}</span>
-                <span className='text-sm font-medium w-20'>
+                <Text size="2xl" className="text-center">
+                  {moodEmojis[(formData.mood || 5) - 1]}
+                </Text>
+                <Text size="sm" weight="medium" className="w-20 text-center">
                   {formData.mood || 5}/10
-                </span>
+                </Text>
               </div>
-              <p className='text-xs text-muted-foreground'>
+              <Text variant="muted" size="xs">
                 {moodLabels[(formData.mood || 5) - 1]}
-              </p>
+              </Text>
             </div>
             {errors.mood && (
-              <p className='text-sm text-destructive'>{errors.mood}</p>
+              <Text variant="destructive" size="sm">
+                {errors.mood}
+              </Text>
             )}
           </div>
 
@@ -184,7 +198,7 @@ export function JournalEntryForm({
                       onClick={() => removeTag(tag)}
                     >
                       {tag}
-                      <span className="ml-1 text-xs">×</span>
+                      <Text size="xs" className="ml-1">×</Text>
                     </Badge>
                   ))}
                 </div>
@@ -199,9 +213,9 @@ export function JournalEntryForm({
                 disabled={isSubmitting || (formData.tags?.length ?? 0) >= 10}
                 maxLength={30}
               />
-              <p className='text-xs text-muted-foreground'>
+              <Text variant="muted" size="xs">
                 Press Enter or comma to add a tag. Maximum 10 tags.
-              </p>
+              </Text>
             </div>
           </div>
 
@@ -212,8 +226,8 @@ export function JournalEntryForm({
             </Label>
             <div className='flex space-x-4'>
               {(['DRAFT', 'PUBLISHED'] as EntryStatus[]).map(status => (
-                <label key={status} className='flex items-center'>
-                  <input
+                <Label key={status} className='flex items-center'>
+                  <Input
                     type='radio'
                     name='status'
                     value={status}
@@ -221,9 +235,12 @@ export function JournalEntryForm({
                     onChange={e => setFormData(prev => ({ ...prev, status: e.target.value as EntryStatus }))}
                     className='mr-2'
                     disabled={isSubmitting}
+                    aria-describedby={`status-${status.toLowerCase()}-description`}
                   />
-                  <span className='text-sm capitalize'>{status.toLowerCase()}</span>
-                </label>
+                  <Text size="sm" className="capitalize" id={`status-${status.toLowerCase()}-description`}>
+                    {status.toLowerCase()}
+                  </Text>
+                </Label>
               ))}
             </div>
           </div>

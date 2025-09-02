@@ -10,7 +10,7 @@ export interface RegisterData {
   password: string
   firstName?: string
   lastName?: string
-  role?: 'CLIENT' | 'PROVIDER' | 'ADMIN'
+  role?: 'CLIENT' | 'PROVIDER'
 }
 
 export interface LoginData {

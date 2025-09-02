@@ -4,8 +4,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
+import { Heading } from '@/components/ui/heading'
+import { Text } from '@/components/ui/text'
 import { EntryDetailLayout } from '@/components/entries/EntryDetailLayout'
 import { useRoleBasedAuth } from '@/hooks/useRoleBasedAuth'
 import { formatDate, getMoodEmoji, getMoodLabel, renderContent } from '@/lib/entryUtils'
@@ -83,16 +85,16 @@ export default function ViewEntryPage({ params }: ViewEntryPageProps): React.JSX
     }
   }, [entryId, fetchEntry])
 
-  const getStatusColor = (status: string): string => {
+  const getStatusVariant = (status: string): 'default' | 'secondary' | 'outline' | 'destructive' => {
     switch (status) {
       case 'PUBLISHED':
-        return 'bg-green-100 text-green-800'
+        return 'default'
       case 'DRAFT':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'secondary'
       case 'ARCHIVED':
-        return 'bg-gray-100 text-gray-800'
+        return 'outline'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'outline'
     }
   }
 
@@ -107,9 +109,11 @@ export default function ViewEntryPage({ params }: ViewEntryPageProps): React.JSX
         title="Error Loading Entry"
       >
         <Card className='shadow-lg border-0 bg-white/90 backdrop-blur-sm'>
-          <CardContent className='p-8 text-center'>
-            <h2 className='text-xl font-semibold text-gray-900 mb-4'>Error Loading Entry</h2>
-            <p className='text-red-600 mb-6'>{error}</p>
+          <CardContent className='p-8'>
+            <Alert variant="destructive">
+              <AlertTitle>Error Loading Entry</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           </CardContent>
         </Card>
       </EntryDetailLayout>
@@ -124,12 +128,21 @@ export default function ViewEntryPage({ params }: ViewEntryPageProps): React.JSX
         onSignOut={handleSignOut}
         backUrl="/client"
         backText="Back to Dashboard"
-        title="Entry Not Found"
+        title={isLoading ? "Loading..." : "Entry Not Found"}
       >
         <Card className='shadow-lg border-0 bg-white/90 backdrop-blur-sm'>
-          <CardContent className='p-8 text-center'>
-            <h2 className='text-xl font-semibold text-gray-900 mb-4'>Entry Not Found</h2>
-            <p className='text-gray-600 mb-6'>The journal entry you&apos;re looking for could not be found.</p>
+          <CardContent className='p-8'>
+            {isLoading ? (
+              <Alert>
+                <AlertTitle>Loading Entry...</AlertTitle>
+                <AlertDescription>Please wait while we fetch your journal entry.</AlertDescription>
+              </Alert>
+            ) : (
+              <Alert variant="destructive">
+                <AlertTitle>Entry Not Found</AlertTitle>
+                <AlertDescription>The journal entry you&apos;re looking for could not be found.</AlertDescription>
+              </Alert>
+            )}
           </CardContent>
         </Card>
       </EntryDetailLayout>
@@ -170,7 +183,7 @@ export default function ViewEntryPage({ params }: ViewEntryPageProps): React.JSX
             <AlertDialogAction
               onClick={handleDeleteEntry}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90"
             >
               {isDeleting ? 'Deleting...' : 'Delete Entry'}
             </AlertDialogAction>
@@ -202,40 +215,42 @@ export default function ViewEntryPage({ params }: ViewEntryPageProps): React.JSX
 
           {deleteSuccess && (
             <Alert className="mb-6 border-green-200 bg-green-50">
-              <AlertDescription className="text-green-700">{deleteSuccess}</AlertDescription>
+              <AlertDescription>
+                <Text variant="success">{deleteSuccess}</Text>
+              </AlertDescription>
             </Alert>
           )}
 
           {/* Entry Status and Metadata */}
-          <div className='flex items-center space-x-4 text-sm text-gray-600 mb-6'>
-            <Badge className={getStatusColor(entry.status)}>
+          <div className='flex items-center space-x-4 mb-6'>
+            <Badge variant={getStatusVariant(entry.status)}>
               {entry.status.toLowerCase()}
             </Badge>
-            <span>📝 {entry.wordCount} words</span>
-            <span>🕒 {formatDate(entry.updatedAt)}</span>
+            <Text size="sm" variant="muted">📝 {entry.wordCount} words</Text>
+            <Text size="sm" variant="muted">🕒 {formatDate(entry.updatedAt)}</Text>
             {entry.publishedAt && (
-              <span>📅 Published: {formatDate(entry.publishedAt)}</span>
+              <Text size="sm" variant="muted">📅 Published: {formatDate(entry.publishedAt)}</Text>
             )}
           </div>
 
           {/* Content */}
           <div className='mb-6'>
             <div className='prose max-w-none'>
-              <div className='whitespace-pre-wrap text-gray-700 leading-relaxed'>
+              <Text as='div' className='whitespace-pre-wrap leading-relaxed'>
                 {renderContent(entry.content)}
-              </div>
+              </Text>
             </div>
           </div>
 
           {/* AI Summary */}
           {entry.aiSummary && (
-            <div className='mb-6 p-4 bg-blue-50/80 rounded-lg'>
-              <h3 className='text-sm font-medium text-gray-700 mb-2'>AI Summary</h3>
-              <p className='text-sm text-gray-600'>{entry.aiSummary}</p>
+            <div className='mb-6 p-4 bg-primary/5 rounded-lg'>
+              <Heading size="sm" variant="default" as="h3" className='mb-2'>AI Summary</Heading>
+              <Text size="sm" variant="muted" className='mb-1'>{entry.aiSummary}</Text>
               {entry.aiSummaryAt && (
-                <p className='text-xs text-gray-500 mt-1'>
+                <Text size="xs" variant="muted">
                   Generated: {formatDate(entry.aiSummaryAt)}
-                </p>
+                </Text>
               )}
             </div>
           )}
@@ -245,12 +260,12 @@ export default function ViewEntryPage({ params }: ViewEntryPageProps): React.JSX
             {/* Mood */}
             {entry.mood && (
               <div>
-                <h3 className='text-sm font-medium text-gray-700 mb-2'>Mood</h3>
+                <Heading size="sm" variant="default" as="h3" className='mb-2'>Mood</Heading>
                 <div className='flex items-center space-x-2'>
-                  <span className='text-2xl'>{getMoodEmoji(entry.mood)}</span>
-                  <span className='text-sm text-gray-600'>
+                  <Text size="xl" className='text-2xl'>{getMoodEmoji(entry.mood)}</Text>
+                  <Text size="sm" variant="muted">
                     {entry.mood}/10 - {getMoodLabel(entry.mood)}
-                  </span>
+                  </Text>
                 </div>
               </div>
             )}
@@ -258,7 +273,7 @@ export default function ViewEntryPage({ params }: ViewEntryPageProps): React.JSX
             {/* Tags */}
             {entry.tags && entry.tags.length > 0 && (
               <div>
-                <h3 className='text-sm font-medium text-gray-700 mb-2'>Tags</h3>
+                <Heading size="sm" variant="default" as="h3" className='mb-2'>Tags</Heading>
                 <div className='flex flex-wrap gap-1'>
                   {entry.tags.map((tag: string) => (
                     <Badge key={tag} variant="secondary" className='text-xs'>
@@ -271,10 +286,10 @@ export default function ViewEntryPage({ params }: ViewEntryPageProps): React.JSX
           </div>
 
           {/* Timestamps */}
-          <div className='pt-4 border-t border-gray-200 text-xs text-gray-500'>
+          <div className='pt-4 border-t border-border'>
             <div className='flex justify-between'>
-              <span>Created: {formatDate(entry.createdAt)}</span>
-              <span>Modified: {formatDate(entry.updatedAt)}</span>
+              <Text size="xs" variant="muted">Created: {formatDate(entry.createdAt)}</Text>
+              <Text size="xs" variant="muted">Modified: {formatDate(entry.updatedAt)}</Text>
             </div>
           </div>
         </CardContent>

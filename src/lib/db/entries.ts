@@ -8,9 +8,9 @@ import type {
   CreateEntryInput, 
   UpdateEntryInput,
   AuditContext,
-  JournalEntryWithUser,
-  JournalEntryWithShares,
-  JournalEntryWithVersions
+  JournalEntryWithUserData,
+  JournalEntryWithSharesData,
+  JournalEntryWithVersionsData
 } from '@/types/database'
 
 export async function createEntry(
@@ -226,7 +226,7 @@ export async function getEntryWithDetails(
   id: string,
   userId: string,
   context: AuditContext
-): Promise<(JournalEntryWithShares & JournalEntryWithVersions) | null> {
+): Promise<(JournalEntryWithSharesData & JournalEntryWithVersionsData) | null> {
   const entry = await db.journalEntry.findFirst({
     where: {
       id,
@@ -265,7 +265,7 @@ export async function getEntryWithDetails(
         take: 10
       }
     }
-  }) as (JournalEntryWithShares & JournalEntryWithVersions) | null
+  }) as (JournalEntryWithSharesData & JournalEntryWithVersionsData) | null
 
   if (entry) {
     // Audit the access
@@ -277,7 +277,7 @@ export async function getEntryWithDetails(
 
 export async function getSharedEntries(
   userId: string
-): Promise<JournalEntryWithUser[]> {
+): Promise<JournalEntryWithUserData[]> {
   const entries = await db.journalEntry.findMany({
     where: {
       shares: {
@@ -299,7 +299,7 @@ export async function getSharedEntries(
     orderBy: { updatedAt: 'desc' }
   })
 
-  return entries as JournalEntryWithUser[]
+  return entries as JournalEntryWithUserData[]
 }
 
 async function getNextVersionNumber(entryId: string): Promise<number> {

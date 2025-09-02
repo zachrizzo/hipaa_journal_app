@@ -42,7 +42,7 @@ interface Props {
 interface User {
   id: string
   email: string
-  role: 'CLIENT' | 'PROVIDER' | 'ADMIN'  // ❌ Use UserRole enum
+  role: 'CLIENT' | 'PROVIDER'  // ❌ Use UserRole enum
 }
 
 // Don't use inline imports
@@ -66,7 +66,7 @@ interface CreateUserInput {
 - `AuditLog` - Audit trail
 
 ### Enums
-- `UserRole` - CLIENT, PROVIDER, ADMIN
+- `UserRole` - CLIENT, PROVIDER
 - `ShareScope` - NONE, TITLE_ONLY, SUMMARY_ONLY, FULL_ACCESS
 - `EntryStatus` - DRAFT, PUBLISHED, ARCHIVED
 - `AuditAction` - CREATE, READ, UPDATE, DELETE, SHARE, UNSHARE
@@ -119,7 +119,7 @@ The following ESLint rules enforce type consistency:
 
 1. **Always import from `@/types`** - Use the centralized exports
 2. **Don't create manual database types** - Let Prisma generate them
-3. **Use enums instead of string literals** - `UserRole.ADMIN` vs `'ADMIN'`
+3. **Use enums instead of string literals** - `UserRole.PROVIDER` vs `'PROVIDER'`
 4. **Run type checks frequently** - Catch issues early
 5. **Update types after schema changes** - Always run `npm run db:generate`
 

@@ -8,7 +8,7 @@ import { sanitizeHtml } from '@/lib/security/sanitize'
 import type { ApiResponse } from '@/types/api'
 import type { JournalEntry } from '@/types/database'
 
-interface EntryParams {
+interface RouteParams {
   params: Promise<{ id: string }>
 }
 
@@ -23,7 +23,7 @@ const updateEntrySchema = z.object({
 // Get a specific journal entry
 export async function GET(
   request: NextRequest,
-  { params }: EntryParams
+  { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<JournalEntry>>> {
   try {
     const session = await getServerSession(authOptions)
@@ -79,7 +79,7 @@ export async function GET(
 // Update a journal entry
 export async function PUT(
   request: NextRequest,
-  { params }: EntryParams
+  { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<JournalEntry>>> {
   try {
     const session = await getServerSession(authOptions)
@@ -174,7 +174,7 @@ export async function PUT(
 // Delete a journal entry and all related data
 export async function DELETE(
   request: NextRequest,
-  { params }: EntryParams
+  { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<{ deletedShares: number; deletedVersions: number; preservedAuditLogs: number }>>> {
   try {
     const session = await getServerSession(authOptions)

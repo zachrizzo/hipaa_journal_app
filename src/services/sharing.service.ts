@@ -6,7 +6,7 @@
 
 import { apiClient } from '@/lib/api/client'
 import type { ShareListResponse, ProviderListResponse } from '@/types/api'
-import type { JournalEntry, EntryStatus, EntryShare } from '@/types/database'
+import type { JournalEntry, EntryStatus, EntryShare, EntryShareWithRelationsData } from '@/types/database'
 
 export interface CreateShareData {
   entryId: string
@@ -77,8 +77,8 @@ export class SharingService {
     }))
   }
 
-  async getShareById(shareId: string): Promise<EntryShare | null> {
-    const response = await apiClient.get<EntryShare>(`/api/shares/${shareId}`)
+  async getShareById(shareId: string): Promise<EntryShareWithRelationsData | null> {
+    const response = await apiClient.get<EntryShareWithRelationsData>(`/api/shares/${shareId}`)
 
     if (!response.success) {
       if (response.error?.includes('not found')) {

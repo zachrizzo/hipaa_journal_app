@@ -2,15 +2,12 @@ import { ReactNode } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
-import { getFullName } from '@/lib/utils'
-import type { SessionUser } from '@/types'
 
 interface AppHeaderProps {
   title: string
   backUrl?: string
   backText?: string
   actions?: ReactNode
-  user?: SessionUser
   className?: string
   backgroundStyle?: 'default' | 'glass'
 }
@@ -19,8 +16,7 @@ export function AppHeader({
   title, 
   backUrl, 
   backText = 'Back', 
-  actions, 
-  user,
+  actions,
   className = '',
   backgroundStyle = 'default'
 }: AppHeaderProps) {
@@ -47,11 +43,6 @@ export function AppHeader({
           </div>
           <div className='flex items-center space-x-4'>
             {actions}
-            {user && (
-              <span className='text-sm text-muted-foreground'>
-                {getFullName(user.firstName, user.lastName)}
-              </span>
-            )}
           </div>
         </div>
       </div>

@@ -29,6 +29,9 @@ declare module 'next-auth/jwt' {
   interface JWT {
     id: string
     role: UserRole
+    email?: string | null
+    firstName?: string | null
+    lastName?: string | null
   }
 }
 
@@ -141,6 +144,9 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id
         token.role = user.role
+        token.email = user.email
+        token.firstName = user.firstName
+        token.lastName = user.lastName
       }
 
       // Validate user still exists and is active
@@ -163,6 +169,9 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         session.user.id = token.id as string
         session.user.role = token.role
+        session.user.email = (token.email as string) ?? session.user.email
+        session.user.firstName = (token.firstName as string | null) ?? null
+        session.user.lastName = (token.lastName as string | null) ?? null
       }
       return session
     },

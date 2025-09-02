@@ -52,9 +52,6 @@ export default function LoginPage(): React.JSX.Element {
         const session = await getSession()
         if (session?.user?.role) {
           switch (session.user.role) {
-            case 'ADMIN':
-              router.push('/admin')
-              break
             case 'PROVIDER':
               router.push('/provider')
               break
@@ -110,9 +107,6 @@ export default function LoginPage(): React.JSX.Element {
         const session = await getSession()
         if (session?.user?.role) {
           switch (session.user.role) {
-            case 'ADMIN':
-              router.push('/admin')
-              break
             case 'PROVIDER':
               router.push('/provider')
               break
@@ -219,18 +213,18 @@ export default function LoginPage(): React.JSX.Element {
               )}
             </Button>
 
-            <div className='text-center'>
+            <Text as='div' className='text-center'>
               <Text size='sm' variant='muted'>
                 Don&apos;t have an account?{' '}
                 <Link href='/register' className='text-primary hover:underline font-medium transition-colors duration-200'>
                   Create account
                 </Link>
               </Text>
-            </div>
+            </Text>
           </form>
 
           {/* Quick Login Buttons for Testing */}
-          <div className='mt-8 pt-6 border-t'>
+          <Text as='div' className='mt-8 pt-6 border-t'>
             <Text size='xs' variant='muted' align='center' weight='medium' className='mb-4'>
               🚀 Quick Login for Testing:
             </Text>
@@ -259,7 +253,7 @@ export default function LoginPage(): React.JSX.Element {
             <Text size='xs' variant='muted' align='center' leading='relaxed' className='mt-3'>
               Use these buttons to quickly test the application with different user roles.
             </Text>
-          </div>
+          </Text>
         </CardContent>
       </Card>
     </div>

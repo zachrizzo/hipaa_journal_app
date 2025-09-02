@@ -251,14 +251,14 @@ export default function RegisterPage(): React.JSX.Element {
               )}
             </Button>
 
-            <div className='text-center'>
+            <Text as='div' className='text-center'>
               <Text size='sm' variant='muted'>
                 Already have an account?{' '}
                 <Link href='/login' className='text-primary hover:underline font-medium transition-colors duration-200'>
                   Sign in
                 </Link>
               </Text>
-            </div>
+            </Text>
           </form>
         </CardContent>
       </Card>

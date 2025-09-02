@@ -20,9 +20,6 @@ export default function HomePage(): React.JSX.Element {
 
     // Redirect based on user role
     switch (session.user.role) {
-      case 'ADMIN':
-        router.push('/admin')
-        break
       case 'PROVIDER':
         router.push('/provider')
         break
@@ -36,7 +33,7 @@ export default function HomePage(): React.JSX.Element {
   if (status === 'loading') {
     return (
       <div className='min-h-screen flex items-center justify-center'>
-        <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-primary'></div>
+        <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-primary' />
       </div>
     )
   }

@@ -5,16 +5,24 @@ import { authOptions } from '@/lib/auth'
 import { createShare, getSharesForProvider, getSharesForClient } from '@/lib/db/shares'
 import { getAuditContext } from '@/lib/security/audit'
 import type { ApiResponse } from '@/types/api'
-import type { EntryShare } from '@/types/database'
-import type { Prisma } from '@prisma/client'
 
-interface TransformedShareDataExtensions {
+interface ShareResponseData {
+  id: string
+  entryId: string
   entryTitle: string
+  providerId: string
   providerName?: string | null
+  clientId: string
   clientName?: string | null
+  scope: 'NONE' | 'TITLE_ONLY' | 'SUMMARY_ONLY' | 'FULL_ACCESS'
+  message: string | null
+  expiresAt: string | null
+  isRevoked: boolean
+  revokedAt: string | null
+  revokedReason: string | null
+  createdAt: string
+  updatedAt: string
 }
-
-type TransformedShareData = EntryShare & TransformedShareDataExtensions
 
 const createShareSchema = z.object({
   entryId: z.string().cuid('Invalid entry ID'),
@@ -45,15 +53,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       )
     }
 
-    // Only clients, providers and admins can create shares
-    if (!['CLIENT', 'PROVIDER', 'ADMIN'].includes(session.user.role)) {
+    // Only clients and providers can create shares
+    if (!['CLIENT', 'PROVIDER'].includes(session.user.role)) {
       return NextResponse.json(
         { success: false, error: 'Insufficient permissions' },
         { status: 403 }
       )
     }
 
-    const body: Omit<Prisma.EntryShareCreateInput, 'id' | 'createdAt' | 'updatedAt' | 'isRevoked' | 'revokedAt' | 'revokedReason'> = await request.json()
+    const body = await request.json()
     const validatedData = createShareSchema.parse(body)
 
     const context = getAuditContext(request, session.user.id)
@@ -99,7 +107,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
   }
 }
 
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<TransformedShareData[]>>> {
+export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<ShareResponseData[]>>> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -128,7 +136,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
     if (validatedParams.type === 'provided') {
       // User is viewing shares they've created (as a provider)
-      if (!['PROVIDER', 'ADMIN'].includes(session.user.role)) {
+      if (session.user.role !== 'PROVIDER') {
         return NextResponse.json(
           { success: false, error: 'Insufficient permissions' },
           { status: 403 }

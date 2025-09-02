@@ -560,12 +560,11 @@ export const authOptions: NextAuthOptions = {
 
 ### **Role-Based Access Control**
 
-**Three-Tier Permission Model:**
+**Two-Tier Permission Model:**
 ```typescript
 enum UserRole {
   CLIENT = 'CLIENT',     // Can create and manage own entries
-  PROVIDER = 'PROVIDER', // Can view shared entries, create summaries
-  ADMIN = 'ADMIN'        // Full system access, user management
+  PROVIDER = 'PROVIDER'  // Can view shared entries, create summaries
 }
 
 // Middleware authorization

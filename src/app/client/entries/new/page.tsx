@@ -59,7 +59,6 @@ export default function NewEntryPage(): React.JSX.Element {
         title="New Journal Entry"
         backUrl="/client"
         backText="Back to Dashboard"
-        user={session.user}
         backgroundStyle="glass"
       />
 
@@ -82,14 +81,14 @@ export default function NewEntryPage(): React.JSX.Element {
               <Alert variant="destructive" className='mb-6'>
                 <AlertCircle className='h-4 w-4' />
                 <AlertDescription>
-                  <div>
+                  <Text as='div'>
                     <Text weight='semibold' className='mb-1'>
                       Error creating entry
                     </Text>
                     <Text size='sm'>
                       {error}
                     </Text>
-                  </div>
+                  </Text>
                 </AlertDescription>
               </Alert>
             )}

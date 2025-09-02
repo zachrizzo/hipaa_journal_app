@@ -48,15 +48,6 @@ export interface AuditLogWithUserData extends AuditLog {
 
 export type SafeUserData = Omit<User, 'hashedPassword' | 'mfaSecret'>
 
-// Legacy compatibility - prefer direct imports
-export type Tables<T extends 'users'> = T extends 'users' ? User : 
-  T extends 'sessions' ? Session :
-  T extends 'journal_entries' ? JournalEntry :
-  T extends 'entry_versions' ? EntryVersion :
-  T extends 'entry_shares' ? EntryShare :
-  T extends 'audit_logs' ? AuditLog :
-  T extends 'system_config' ? SystemConfig : never
-
 export interface CreateUserInput {
   email: string
   firstName?: string | null
