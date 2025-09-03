@@ -92,7 +92,7 @@ Visit `http://localhost:3000` to access the application.
 These annotated diagrams summarize how the system is structured and how critical workflows (PHI handling and AI summarization) operate. Images are checked into the repository to ensure they render anywhere Markdown is viewed.
 
 ### High-level system architecture (end-to-end)
-<img src="./Screenshot 2025-09-03 at 5.23.51 PM.png" alt="High-level architecture: client, middleware/auth, API routes, security utilities, repositories/Prisma, database" width="100%" />
+<img src="./Screenshot 2025-09-03 at 8.34.33 PM.png" alt="High-level architecture: client, middleware/auth, API routes, security utilities, repositories/Prisma, database" width="100%" />
 
 Key highlights:
 - Client uses Next.js App Router pages and thin client services.
@@ -102,7 +102,7 @@ Key highlights:
 - Prisma provides typed DB access to Users, Sessions, JournalEntries, EntryVersions, EntryShares, and AuditLogs.
 
 ### Combined summaries pipeline (hierarchical)
-<img src="./Screenshot 2025-09-03 at 5.28.39 PM.png" alt="Flow showing combined summaries: fetch entries, individual summaries if missing, group summaries, final combined summary, with security hooks" width="100%" />
+<img src="./Screenshot 2025-09-03 at 8.34.48 PM.png" alt="Flow showing combined summaries: fetch entries, individual summaries if missing, group summaries, final combined summary, with security hooks" width="100%" />
 
 Flow summary:
 - Fetch entries with access checks; convert TipTap JSON to plain text.
@@ -112,16 +112,16 @@ Flow summary:
 - Rate limits and audit logs applied; optional persistence of individual summaries.
 
 ### AI tree structure with examples (groupSize=2)
-<img src="./Screenshot 2025-09-03 at 5.29.37 PM.png" alt="Tree view: Level 0 entries → Level 1 individual summaries → Level 2 grouped summaries → Level 3 final combined summary, with example moods/themes" width="100%" />
+<img src="./Screenshot 2025-09-03 at 8.35.09 PM.png" alt="Tree view: Level 0 entries → Level 1 individual summaries → Level 2 grouped summaries → Level 3 final combined summary, with example moods/themes" width="100%" />
 
 ### AI tree structure with leftover group example (5 entries)
-<img src="./Screenshot 2025-09-03 at 5.29.48 PM.png" alt="Tree view showing leftover group when entries are odd: G1=S1+S2, G2=S3+S4, G3=S5, then combine all" width="80%" />
+<img src="./Screenshot 2025-09-03 at 8.35.22 PM.png" alt="Tree view showing leftover group when entries are odd: G1=S1+S2, G2=S3+S4, G3=S5, then combine all" width="80%" />
 
 ### PHI lifecycle and security controls
-<img src="./Screenshot 2025-09-03 at 5.34.21 PM.png" alt="PHI lifecycle map: TipTap input → API sanitization → DB storage → AI sanitization/redaction → validation → optional save, with middleware, rate limits, audit logging" width="100%" />
+<img src="./Screenshot 2025-09-03 at 8.35.40 PM.png" alt="PHI lifecycle map: TipTap input → API sanitization → DB storage → AI sanitization/redaction → validation → optional save, with middleware, rate limits, audit logging" width="100%" />
 
 ### Core data model ERD (Prisma)
-<img src="./Screenshot 2025-09-03 at 5.34.44 PM.png" alt="Entity-relationship diagram of User, Session, JournalEntry, EntryVersion, EntryShare, AuditLog and their relations" width="100%" />
+<img src="./Screenshot 2025-09-03 at 8.35.51 PM.png" alt="Entity-relationship diagram of User, Session, JournalEntry, EntryVersion, EntryShare, AuditLog and their relations" width="100%" />
 
 #### File pointers for the diagrams
 - Middleware/auth: `src/middleware.ts`, `src/lib/auth.ts`, `src/app/api/auth/[...nextauth]/route.ts`
@@ -183,7 +183,6 @@ OPENAI_API_KEY=your-openai-key
 ## 📊 Project Status
 
 ### Completed Features ✅
-- [x] Project setup with Next.js 14 + TypeScript
 - [x] Database schema with Prisma (HIPAA-compliant)
 - [x] Authentication system with NextAuth.js
 - [x] Secure rich text editor with TipTap
@@ -198,6 +197,4 @@ OPENAI_API_KEY=your-openai-key
 - **Enterprise Ready**: Audit logging, monitoring
 - **Scalable**: Prisma ORM, optimized queries, efficient architecture
 
----
 
-**⚠️ Important**: This application handles Protected Health Information (PHI). Ensure proper security measures, compliance training, and legal review before production deployment.
