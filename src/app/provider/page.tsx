@@ -14,6 +14,7 @@ import { useRoleBasedAuth } from '@/hooks/useRoleBasedAuth'
 import { useEntries } from '@/hooks/useEntries'
 import { SummaryDisplay } from '@/components/provider/SummaryDisplay'
 import { entriesService } from '@/services'
+import type { SharedEntry } from '@/services/sharing.service'
 
 export default function ProviderDashboard(): React.JSX.Element {
   const { session, isLoading, handleSignOut } = useRoleBasedAuth({ requiredRole: 'PROVIDER' })
@@ -23,7 +24,22 @@ export default function ProviderDashboard(): React.JSX.Element {
     type: 'provider',
     search: searchQuery
   })
-  const [combinedSummary, setCombinedSummary] = useState<any>(null)
+  const [combinedSummary, setCombinedSummary] = useState<{
+    totalEntries: number
+    dateRange: {
+      start: string
+      end: string
+    }
+    finalSummary: string
+    hierarchicalSummaries?: Array<{
+      level: 'group' | 'entry'
+      summary: string
+      entries?: Array<{
+        title: string
+        timestamp: string
+      }>
+    }>
+  } | null>(null)
   const [showSummaryTree, setShowSummaryTree] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState({ current: 0, total: 0 })
@@ -180,12 +196,12 @@ export default function ProviderDashboard(): React.JSX.Element {
           )}
 
           {isPostProcessing && (
-            <div className="flex items-center justify-center gap-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-              <Text size="sm" className="text-blue-700">
+            <Alert>
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              <AlertDescription>
                 Updating entries and generating combined analysis...
-              </Text>
-            </div>
+              </AlertDescription>
+            </Alert>
           )}
         </div>
       )}
@@ -215,8 +231,8 @@ export default function ProviderDashboard(): React.JSX.Element {
         isLoading={entriesLoading}
         entryUrlGenerator={(id) => {
           // Find the share ID for this entry
-          const sharedEntry = sharedEntries.find(e => e.id === id) as any
-          return `/provider/shared-entries/${sharedEntry?.shareId || id}`
+          const sharedEntry = sharedEntries.find(e => e.id === id)
+          return `/provider/shared-entries/${(sharedEntry as SharedEntry)?.shareId || id}`
         }}
         emptyStateConfig={{
           title: "No shared entries",

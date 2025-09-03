@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
       config.externals = [...(config.externals || []), 'redact-pii'];
     }
     return config;
+  },
+  eslint: {
+    // We run ESLint separately in build:check to handle warnings vs errors properly
+    ignoreDuringBuilds: true,
   }
 };
 
