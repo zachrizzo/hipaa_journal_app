@@ -10,7 +10,7 @@ async function main() {
   const providerUser = await prisma.user.upsert({
     where: { email: 'dr.sarah.provider@example.com' },
     update: {
-      hashedPassword: await hash('password123!', 12),
+      hashedPassword: await hash('SecurePass123!@#', 12),
       loginAttempts: 0,
       lockedUntil: null,
       isActive: true,
@@ -20,7 +20,7 @@ async function main() {
       firstName: 'Dr. Sarah',
       lastName: 'Provider',
       role: 'PROVIDER',
-      hashedPassword: await hash('password123!', 12),
+      hashedPassword: await hash('SecurePass123!@#', 12),
       isActive: true,
     }
   })
@@ -35,7 +35,7 @@ async function main() {
       firstName: 'John Doe',
       lastName: 'Client',
       role: 'CLIENT',
-      hashedPassword: await hash('password123!', 12),
+      hashedPassword: await hash('SecurePass123!@#', 12),
       isActive: true,
     }
   })

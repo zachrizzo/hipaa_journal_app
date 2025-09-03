@@ -233,7 +233,7 @@ export default function LoginPage(): React.JSX.Element {
                 size="sm"
                 className='w-full'
                 disabled={isLoading}
-                onClick={() => handleQuickLogin('john.doe.client@example.com', 'password123!')}
+                onClick={() => handleQuickLogin('john.doe.client@example.com', 'SecurePass123!@#')}
               >
                 <User className='w-4 h-4 mr-2' />
                 Login as Client (John Doe)
@@ -243,7 +243,7 @@ export default function LoginPage(): React.JSX.Element {
                 size="sm"
                 className='w-full'
                 disabled={isLoading}
-                onClick={() => handleQuickLogin('dr.sarah.provider@example.com', 'password123!')}
+                onClick={() => handleQuickLogin('dr.sarah.provider@example.com', 'SecurePass123!@#')}
               >
                 <Stethoscope className='w-4 h-4 mr-2' />
                 Login as Provider (Dr. Sarah)
