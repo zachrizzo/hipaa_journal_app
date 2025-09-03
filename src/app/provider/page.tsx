@@ -15,6 +15,7 @@ import { useEntries } from '@/hooks/useEntries'
 import { entriesService } from '@/services'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Text } from '@/components/ui/text'
 import type { SharedEntry } from '@/services/sharing.service'
 
 export default function ProviderDashboard(): React.JSX.Element {
@@ -159,7 +160,7 @@ export default function ProviderDashboard(): React.JSX.Element {
               {isGeneratingSummaries ? (
                 <div className="flex items-center gap-3">
                   <Loader2 className='w-5 h-5 animate-spin' />
-                  <span>Generating Summaries</span>
+                  <Text>Generating Summaries</Text>
                   <Badge variant="secondary" className="ml-2">
                     {summaryProgress.current} / {summaryProgress.total}
                   </Badge>
@@ -188,9 +189,9 @@ export default function ProviderDashboard(): React.JSX.Element {
       {isGeneratingSummaries && summaryProgress.total > 0 && (
         <div className="mb-6 space-y-2">
           <Progress value={(summaryProgress.current / summaryProgress.total) * 100} className="h-2" />
-          <p className="text-xs text-muted-foreground text-center">
+          <Text size="xs" variant="muted" align="center" className="block">
             Processing entry {summaryProgress.current} of {summaryProgress.total}
-          </p>
+          </Text>
         </div>
       )}
 
@@ -210,8 +211,8 @@ export default function ProviderDashboard(): React.JSX.Element {
                 <summary className="cursor-pointer text-sm font-medium">View error details</summary>
                 <ul className="mt-2 space-y-1">
                   {summaryErrors.map((error, index) => (
-                    <li key={index} className="text-sm text-muted-foreground">
-                      • {error}
+                    <li key={index}>
+                      <Text size="sm" variant="muted">• {error}</Text>
                     </li>
                   ))}
                 </ul>
@@ -252,20 +253,20 @@ export default function ProviderDashboard(): React.JSX.Element {
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="bg-muted/50 rounded-lg p-4 text-center">
                 <FileText className="w-8 h-8 mx-auto mb-2 text-primary" />
-                <p className="text-2xl font-bold">{combinedSummary.totalEntries}</p>
-                <p className="text-sm text-muted-foreground">Total Entries</p>
+                <Text size="2xl" weight="bold" className="block">{combinedSummary.totalEntries}</Text>
+                <Text size="sm" variant="muted" className="block">Total Entries</Text>
               </div>
               <div className="bg-muted/50 rounded-lg p-4 text-center">
                 <Calendar className="w-8 h-8 mx-auto mb-2 text-primary" />
-                <p className="text-lg font-bold">
+                <Text size="lg" weight="bold" className="block">
                   {new Date(combinedSummary.dateRange.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </p>
-                <p className="text-sm text-muted-foreground">to {new Date(combinedSummary.dateRange.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                </Text>
+                <Text size="sm" variant="muted" className="block">to {new Date(combinedSummary.dateRange.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</Text>
               </div>
               <div className="bg-muted/50 rounded-lg p-4 text-center">
                 <Users className="w-8 h-8 mx-auto mb-2 text-primary" />
-                <p className="text-2xl font-bold">{combinedSummary.hierarchicalSummaries?.filter((item: any) => item.level === 'group').length || 0}</p>
-                <p className="text-sm text-muted-foreground">Summary Groups</p>
+                <Text size="2xl" weight="bold" className="block">{combinedSummary.hierarchicalSummaries?.filter((item: any) => item.level === 'group').length || 0}</Text>
+                <Text size="sm" variant="muted" className="block">Summary Groups</Text>
               </div>
             </div>
 
@@ -274,10 +275,10 @@ export default function ProviderDashboard(): React.JSX.Element {
               <div className="flex items-start gap-3 mb-4">
                 <CheckCircle2 className="w-5 h-5 text-primary mt-0.5" />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-3">Overall Summary</h3>
-                  <p className="text-foreground leading-relaxed">
+                  <Text as="h3" size="lg" weight="semibold" className="block mb-3">Overall Summary</Text>
+                  <Text className="block" leading="relaxed">
                     {combinedSummary.finalSummary}
-                  </p>
+                  </Text>
                 </div>
               </div>
             </div>
@@ -304,20 +305,20 @@ export default function ProviderDashboard(): React.JSX.Element {
                         <CardHeader className="pb-3">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
-                                {index + 1}
+                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Text size="sm" weight="semibold" variant="primary">{index + 1}</Text>
                               </div>
                               <div>
-                                <p className="font-medium">Entry #{index + 1}</p>
-                                <p className="text-xs text-muted-foreground">{summary.wordCount} words</p>
+                                <Text weight="medium" className="block">Entry #{index + 1}</Text>
+                                <Text size="xs" variant="muted" className="block">{summary.wordCount} words</Text>
                               </div>
                             </div>
                           </div>
                         </CardHeader>
                         <CardContent className="pt-0">
-                          <p className="text-sm text-foreground leading-relaxed">
+                          <Text size="sm" className="block" leading="relaxed">
                             {summary.summary}
-                          </p>
+                          </Text>
                         </CardContent>
                       </Card>
                     ))}
@@ -335,21 +336,21 @@ export default function ProviderDashboard(): React.JSX.Element {
                           <Card key={`group-${index}`} className="border-l-4 border-l-secondary">
                             <CardHeader className="pb-3">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center font-bold text-secondary">
-                                  G{index + 1}
+                                <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+                                  <Text weight="bold" variant="secondary">G{index + 1}</Text>
                                 </div>
                                 <div>
-                                  <p className="font-medium">Group {index + 1}</p>
-                                  <p className="text-xs text-muted-foreground">
+                                  <Text weight="medium" className="block">Group {index + 1}</Text>
+                                  <Text size="xs" variant="muted" className="block">
                                     Combined {summary.entryIds.length} entries
-                                  </p>
+                                  </Text>
                                 </div>
                               </div>
                             </CardHeader>
                             <CardContent className="pt-0">
-                              <p className="text-sm text-foreground leading-relaxed">
+                              <Text size="sm" className="block" leading="relaxed">
                                 {summary.summary}
-                              </p>
+                              </Text>
                             </CardContent>
                           </Card>
                         ))}
@@ -357,7 +358,7 @@ export default function ProviderDashboard(): React.JSX.Element {
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p>No group summaries available</p>
+                      <Text>No group summaries available</Text>
                     </div>
                   )}
               </TabsContent>
