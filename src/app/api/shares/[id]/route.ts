@@ -119,7 +119,7 @@ export async function GET(
       success: true,
       data: responseData
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch share' },
       { status: 500 }

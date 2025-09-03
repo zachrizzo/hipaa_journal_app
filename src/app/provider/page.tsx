@@ -3,113 +3,78 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/page-header'
-import { Badge } from '@/components/ui/badge'
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Stethoscope, Sparkles, Loader2, FileText, Calendar, Brain, Users, ClipboardList, CheckCircle2 } from 'lucide-react'
+import { Text } from '@/components/ui/text'
+import { Stethoscope, Brain, Sparkles, Loader2 } from 'lucide-react'
 import { SearchBar } from '@/components/search/SearchBar'
 import { EntryGrid } from '@/components/entries/EntryGrid'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { useRoleBasedAuth } from '@/hooks/useRoleBasedAuth'
 import { useEntries } from '@/hooks/useEntries'
+import { SummaryDisplay } from '@/components/provider/SummaryDisplay'
 import { entriesService } from '@/services'
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Text } from '@/components/ui/text'
-import type { SharedEntry } from '@/services/sharing.service'
 
 export default function ProviderDashboard(): React.JSX.Element {
   const { session, isLoading, handleSignOut } = useRoleBasedAuth({ requiredRole: 'PROVIDER' })
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'>('all')
   const { entries: sharedEntries, isLoading: entriesLoading, refetch } = useEntries({
     session,
     type: 'provider',
-    search: searchQuery,
-    status: statusFilter === 'all' ? undefined : statusFilter
+    search: searchQuery
   })
-  const [isGeneratingSummaries, setIsGeneratingSummaries] = useState(false)
-  const [summaryProgress, setSummaryProgress] = useState({ current: 0, total: 0 })
-  const [summaryMessage, setSummaryMessage] = useState<{ type: 'success' | 'error', message: string } | null>(null)
   const [combinedSummary, setCombinedSummary] = useState<any>(null)
   const [showSummaryTree, setShowSummaryTree] = useState(false)
-  const [summaryErrors, setSummaryErrors] = useState<string[]>([])
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [progress, setProgress] = useState({ current: 0, total: 0 })
+  const [message, setMessage] = useState<{ type: 'success' | 'error', message: string } | null>(null)
   const [isPostProcessing, setIsPostProcessing] = useState(false)
 
-  const headerActions = null // Provider dashboard doesn't need header actions in nav
-
-  const generateSummariesForAll = async (): Promise<void> => {
-    
+  const generateAllSummaries = async (): Promise<void> => {
     if (sharedEntries.length === 0) {
-      setSummaryMessage({ type: 'error', message: 'No entries to generate summaries for' })
+      setMessage({ type: 'error', message: 'No entries to generate summaries for' })
       return
     }
 
-    setIsGeneratingSummaries(true)
-    setSummaryMessage(null)
-    setSummaryErrors([])
-    setSummaryProgress({ current: 0, total: sharedEntries.length })
+    setIsGenerating(true)
+    setMessage(null)
+    setProgress({ current: 0, total: sharedEntries.length })
 
     let successCount = 0
     let errorCount = 0
-    const errors: string[] = []
 
     for (let i = 0; i < sharedEntries.length; i++) {
       const entry = sharedEntries[i]
-      setSummaryProgress({ current: i + 1, total: sharedEntries.length })
+      setProgress({ current: i + 1, total: sharedEntries.length })
 
       try {
-        
-        // Only generate summary if it doesn't exist
         if (!entry.aiSummary) {
-          await entriesService.generateSummary(entry.id, true) // Save to database
+          await entriesService.generateSummary(entry.id, true)
           successCount++
         }
       } catch (error) {
         errorCount++
-        let errorMessage = 'Unknown error'
-        
-        if (error instanceof Error) {
-          // Check for specific error types
-          if (error.message.includes('timeout') || error.message.includes('Timeout')) {
-            errorMessage = 'Request timed out - entry may be too long'
-          } else if (error.message.includes('Network error')) {
-            errorMessage = 'Network connection issue'
-          } else if (error.message.includes('Failed to generate summary')) {
-            errorMessage = 'Summary generation failed'
-          } else {
-            errorMessage = error.message
-          }
-        }
-        
-        errors.push(`${entry.title}: ${errorMessage}`)
       }
     }
 
-    // Mark generation as complete but start post-processing
-    setIsGeneratingSummaries(false)
-    setSummaryProgress({ current: 0, total: 0 })
+    setIsGenerating(false)
+    setProgress({ current: 0, total: 0 })
     setIsPostProcessing(true)
 
-    // Show result message
     if (errorCount === 0) {
-      setSummaryMessage({ 
+      setMessage({ 
         type: 'success', 
         message: `Successfully generated ${successCount} summaries!` 
       })
     } else {
-      setSummaryMessage({ 
+      setMessage({ 
         type: 'error', 
         message: `Generated ${successCount} summaries, but ${errorCount} failed.` 
       })
-      setSummaryErrors(errors)
     }
 
     try {
-      // Refresh the entries to show new summaries
       await refetch()
-      
-      // Generate combined summary after individual summaries
       if (successCount > 0) {
         await generateCombinedSummary()
       }
@@ -139,10 +104,9 @@ export default function ProviderDashboard(): React.JSX.Element {
       setCombinedSummary(data.data)
       setShowSummaryTree(true)
     } catch (error) {
-      // Error generating combined summary
+      console.error('Failed to generate combined summary:', error)
     }
   }
-  
 
   return (
     <DashboardLayout
@@ -151,7 +115,6 @@ export default function ProviderDashboard(): React.JSX.Element {
       onSignOut={handleSignOut}
       title="Provider Dashboard"
       icon={Stethoscope}
-      headerActions={headerActions}
     >
       <PageHeader
         title="Shared Patient Entries"
@@ -161,17 +124,14 @@ export default function ProviderDashboard(): React.JSX.Element {
             <Button 
               variant='gradient' 
               size='lg' 
-              onClick={generateSummariesForAll}
-              disabled={isGeneratingSummaries || isPostProcessing || entriesLoading || sharedEntries.length === 0}
+              onClick={generateAllSummaries}
+              disabled={entriesLoading || isGenerating || sharedEntries.length === 0}
             >
-              {isGeneratingSummaries ? (
-                <div className="flex items-center gap-3">
-                  <Loader2 className='w-5 h-5 animate-spin' />
-                  <Text>Generating Summaries</Text>
-                  <Badge variant="secondary" className="ml-2">
-                    {summaryProgress.current} / {summaryProgress.total}
-                  </Badge>
-                </div>
+              {isGenerating ? (
+                <>
+                  <Loader2 className='w-5 h-5 mr-2 animate-spin' />
+                  Generating {progress.current}/{progress.total}
+                </>
               ) : (
                 <>
                   <Sparkles className='w-5 h-5 mr-2' />
@@ -179,239 +139,90 @@ export default function ProviderDashboard(): React.JSX.Element {
                 </>
               )}
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => setShowSummaryTree(true)}
-              disabled={!combinedSummary || isGeneratingSummaries || isPostProcessing}
-            >
-              <Brain className='w-5 h-5 mr-2' />
-              View AI Summary
-            </Button>
+            {combinedSummary && (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setShowSummaryTree(true)}
+              >
+                <Brain className='w-5 h-5 mr-2' />
+                View AI Summary
+              </Button>
+            )}
           </div>
         }
       />
 
-      {/* Progress Bar for Summary Generation */}
-      {isGeneratingSummaries && summaryProgress.total > 0 && (
-        <div className="mb-6 space-y-2">
-          <Progress value={(summaryProgress.current / summaryProgress.total) * 100} className="h-2" />
-          <Text size="xs" variant="muted" align="center" className="block">
-            Processing entry {summaryProgress.current} of {summaryProgress.total}
-          </Text>
+      {/* Progress and Status Messages */}
+      {(isGenerating || message || isPostProcessing) && (
+        <div className="mb-6 space-y-4">
+          {isGenerating && progress.total > 0 && (
+            <div className="space-y-2">
+              <Progress value={(progress.current / progress.total) * 100} className="h-2" />
+              <Text size="xs" variant="muted" align="center" className="block">
+                Processing entry {progress.current} of {progress.total}
+              </Text>
+            </div>
+          )}
+
+          {message && (
+            <Alert 
+              variant={message.type === 'error' ? 'destructive' : 'default'} 
+              className="border-2"
+            >
+              <AlertTitle>
+                {message.type === 'error' ? 'Error' : 'Success'}
+              </AlertTitle>
+              <AlertDescription>
+                {message.message}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isPostProcessing && (
+            <div className="flex items-center justify-center gap-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+              <Text size="sm" className="text-blue-700">
+                Updating entries and generating combined analysis...
+              </Text>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Summary Generation Message */}
-      {summaryMessage && (
-        <Alert 
-          variant={summaryMessage.type === 'error' ? 'destructive' : 'default'} 
-          className="mb-6 border-2"
-        >
-          <AlertTitle>
-            {summaryMessage.type === 'error' ? 'Error' : 'Success'}
-          </AlertTitle>
-          <AlertDescription>
-            {summaryMessage.message}
-            {summaryMessage.type === 'error' && summaryErrors.length > 0 && (
-              <details className="mt-2">
-                <summary className="cursor-pointer text-sm font-medium">View error details</summary>
-                <ul className="mt-2 space-y-1">
-                  {summaryErrors.map((error, index) => (
-                    <li key={index}>
-                      <Text size="sm" variant="muted">• {error}</Text>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Post-Processing Loading Indicator */}
-      {isPostProcessing && (
-        <div className="mb-6 flex items-center justify-center gap-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-          <Text size="sm" className="text-blue-700">
-            Updating entries and generating combined analysis...
-          </Text>
-        </div>
-      )}
-      
       {/* AI Summary Analysis */}
       {showSummaryTree && combinedSummary && (
-        <Card className="mb-6 shadow-lg bg-white">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-lg bg-primary text-primary-foreground">
-                  <Brain className="w-5 h-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">AI Summary Analysis</CardTitle>
-                  <CardDescription className="mt-1">
-                    Comprehensive analysis of {combinedSummary.totalEntries} patient entries
-                  </CardDescription>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSummaryTree(false)}
-              >
-                Close
-              </Button>
-            </div>
-          </CardHeader>
-          
-          <CardContent className="pt-0">
-            {/* Summary Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="bg-muted/50 rounded-lg p-4 text-center">
-                <FileText className="w-8 h-8 mx-auto mb-2 text-primary" />
-                <Text size="2xl" weight="bold" className="block">{combinedSummary.totalEntries}</Text>
-                <Text size="sm" variant="muted" className="block">Total Entries</Text>
-              </div>
-              <div className="bg-muted/50 rounded-lg p-4 text-center">
-                <Calendar className="w-8 h-8 mx-auto mb-2 text-primary" />
-                <Text size="lg" weight="bold" className="block">
-                  {new Date(combinedSummary.dateRange.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </Text>
-                <Text size="sm" variant="muted" className="block">to {new Date(combinedSummary.dateRange.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</Text>
-              </div>
-              <div className="bg-muted/50 rounded-lg p-4 text-center">
-                <Users className="w-8 h-8 mx-auto mb-2 text-primary" />
-                <Text size="2xl" weight="bold" className="block">{combinedSummary.hierarchicalSummaries?.filter((item: any) => item.level === 'group').length || 0}</Text>
-                <Text size="sm" variant="muted" className="block">Summary Groups</Text>
-              </div>
-            </div>
-
-            {/* Main Summary */}
-            <div className="bg-white border border-primary/20 rounded-lg p-6 mb-6">
-              <div className="flex items-start gap-3 mb-4">
-                <CheckCircle2 className="w-5 h-5 text-primary mt-0.5" />
-                <div className="flex-1">
-                  <Text as="h3" size="lg" weight="semibold" className="block mb-3">Overall Summary</Text>
-                  <Text className="block" leading="relaxed">
-                    {combinedSummary.finalSummary}
-                  </Text>
-                </div>
-              </div>
-            </div>
-
-            {/* Tabbed Content */}
-            <Tabs defaultValue="individual" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="individual" className="flex items-center gap-2">
-                  <ClipboardList className="w-4 h-4" />
-                  Individual Summaries ({combinedSummary.hierarchicalSummaries?.filter((item: any) => item.level === 'individual').length || 0})
-                </TabsTrigger>
-                <TabsTrigger value="groups" className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  Group Summaries ({combinedSummary.hierarchicalSummaries?.filter((item: any) => item.level === 'group').length || 0})
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="individual" className="mt-4 space-y-3">
-                <div className="max-h-[500px] overflow-y-auto pr-2 space-y-3">
-                  {combinedSummary.hierarchicalSummaries && combinedSummary.hierarchicalSummaries
-                    .filter((item: any) => item.level === 'individual')
-                    .map((summary: any, index: number) => (
-                      <Card key={`individual-${index}`} className="border-l-4 border-l-primary">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Text size="sm" weight="semibold" variant="primary">{index + 1}</Text>
-                              </div>
-                              <div>
-                                <Text weight="medium" className="block">Entry #{index + 1}</Text>
-                                <Text size="xs" variant="muted" className="block">{summary.wordCount} words</Text>
-                              </div>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <Text size="sm" className="block" leading="relaxed">
-                            {summary.summary}
-                          </Text>
-                        </CardContent>
-                      </Card>
-                    ))}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="groups" className="mt-4 space-y-3">
-                {combinedSummary.hierarchicalSummaries && combinedSummary.hierarchicalSummaries
-                  .filter((item: any) => item.level === 'group')
-                  .length > 0 ? (
-                    <div className="space-y-3">
-                      {combinedSummary.hierarchicalSummaries
-                        .filter((item: any) => item.level === 'group')
-                        .map((summary: any, index: number) => (
-                          <Card key={`group-${index}`} className="border-l-4 border-l-secondary">
-                            <CardHeader className="pb-3">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
-                                  <Text weight="bold" variant="secondary">G{index + 1}</Text>
-                                </div>
-                                <div>
-                                  <Text weight="medium" className="block">Group {index + 1}</Text>
-                                  <Text size="xs" variant="muted" className="block">
-                                    Combined {summary.entryIds.length} entries
-                                  </Text>
-                                </div>
-                              </div>
-                            </CardHeader>
-                            <CardContent className="pt-0">
-                              <Text size="sm" className="block" leading="relaxed">
-                                {summary.summary}
-                              </Text>
-                            </CardContent>
-                          </Card>
-                        ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <Text>No group summaries available</Text>
-                    </div>
-                  )}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+        <SummaryDisplay 
+          summary={combinedSummary} 
+          onClose={() => setShowSummaryTree(false)} 
+        />
       )}
-
-      {/* Search and Filter Bar */}
-      <SearchBar
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        statusFilter={statusFilter as 'all' | 'DRAFT' | 'PUBLISHED'}
-        onStatusFilterChange={(value) => setStatusFilter(value as 'all' | 'DRAFT' | 'PUBLISHED' | 'ARCHIVED')}
-        placeholder='Search patient entries...'
-        statusOptions={[
-          { value: 'all', label: 'All Entries' },
-          { value: 'PUBLISHED', label: 'Published' },
-          { value: 'DRAFT', label: 'Draft' }
-        ]}
-      />
+      
+      {/* Search Bar */}
+      <div className="mb-6">
+        <SearchBar 
+          placeholder="Search by title or client name..."
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter="all"
+          onStatusFilterChange={() => {}}
+        />
+      </div>
 
       {/* Shared Entries Grid */}
       <EntryGrid
         entries={sharedEntries}
         isLoading={entriesLoading}
-        emptyStateConfig={{
-          title: 'No shared entries',
-          description: 'No patients have shared journal entries with you yet',
-          actionText: 'Refresh',
-          actionHref: '/provider'
+        entryUrlGenerator={(id) => {
+          // Find the share ID for this entry
+          const sharedEntry = sharedEntries.find(e => e.id === id) as any
+          return `/provider/shared-entries/${sharedEntry?.shareId || id}`
         }}
-        entryUrlGenerator={(entryId) => {
-          // Find the entry to get its shareId  
-          const entry = sharedEntries.find(e => e.id === entryId) as SharedEntry | undefined
-          return entry?.shareId ? `/provider/shared-entries/${entry.shareId}` : `/provider/entries/${entryId}`
+        emptyStateConfig={{
+          title: "No shared entries",
+          description: "You don't have any patient entries shared with you yet.",
+          actionText: "",
+          actionHref: ""
         }}
       />
     </DashboardLayout>

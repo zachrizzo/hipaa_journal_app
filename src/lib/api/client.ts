@@ -27,7 +27,9 @@ class ApiClient {
   private defaultTimeout: number = 30000 // 30 seconds default timeout
 
   constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_API_URL || ''
+    this.baseURL = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : process.env.NEXT_PUBLIC_API_URL || ''
   }
 
   private async request<T>(

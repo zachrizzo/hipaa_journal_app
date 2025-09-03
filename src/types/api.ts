@@ -95,10 +95,11 @@ export interface EntryDetailResponse extends Pick<JournalEntry,
 }
 
 export interface EntriesListResponse {
-  entries: EntryListResponse[]
+  items: EntryListResponse[]
   total: number
   page: number
   totalPages: number
+  hasMore: boolean
 }
 
 // Share API types

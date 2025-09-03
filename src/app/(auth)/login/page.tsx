@@ -119,7 +119,7 @@ export default function LoginPage(): React.JSX.Element {
           router.push('/client')
         }
       }
-    } catch (error) {
+    } catch {
       setLoginError('Quick login failed')
       setIsLoading(false)
     }
@@ -138,9 +138,9 @@ export default function LoginPage(): React.JSX.Element {
           <Heading as='h1' size='2xl' variant='gradient'>
             HIPAA Journal
           </Heading>
-          <CardDescription className='mt-2'>
+          <Text as="p" className='mt-2 text-muted-foreground text-sm text-center'>
             Secure journaling for healthcare professionals and clients
-          </CardDescription>
+          </Text>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className='space-y-6'>

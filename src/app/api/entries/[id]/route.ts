@@ -67,7 +67,7 @@ export async function GET(
       success: true,
       data: entry as JournalEntry
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
@@ -254,7 +254,7 @@ export async function DELETE(
       },
       { status: 200 }
     )
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

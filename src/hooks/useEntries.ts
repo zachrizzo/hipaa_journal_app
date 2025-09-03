@@ -19,7 +19,9 @@ export function useEntries({ session, type, search, status }: UseEntriesProps) {
   const [error, setError] = useState<string | null>(null)
 
   const fetchEntries = useCallback(async (): Promise<void> => {
-    if (!session) return
+    if (!session) {
+      return
+    }
 
     try {
       setError(null)
@@ -40,9 +42,7 @@ export function useEntries({ session, type, search, status }: UseEntriesProps) {
             || s.title.toLowerCase().includes((search || '').toLowerCase())
             || (s.clientName || '').toLowerCase().includes((search || '').toLowerCase())
 
-          const matchesStatus = !status || status === 'PUBLISHED' // shared entries are effectively published
-
-          return matchesSearch && matchesStatus
+          return matchesSearch
         })
         setEntries(filtered)
       }

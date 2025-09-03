@@ -1,18 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { createAuditLog, getAuditContext } from '@/lib/security/audit'
 import { sanitizeHtml } from '@/lib/security/sanitize'
-import { toPlainText } from '@/lib/utils/tiptap-parser'
+import { calculateWordCount, normalizeTags } from '@/lib/utils/entry-utils'
+import { entryAccessibleByUser, paginationParams, entryOrderBy, entrySearchWhere } from '@/lib/db/query-helpers'
+import { withAuth } from '@/lib/api/auth-wrapper'
+import { apiSuccess, apiPaginated, badRequest, serverError } from '@/lib/api/responses'
 import validator from 'validator'
-import type { ApiResponse, EntriesListResponse } from '@/types/api'
-import type { Prisma } from '@prisma/client'
-import type { JournalEntry } from '@/types/database'
-
-
-
+import type { User } from '@prisma/client'
 
 const createEntrySchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters'),
@@ -30,206 +25,121 @@ const listEntriesSchema = z.object({
 })
 
 // Create a new journal entry
-export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<Pick<JournalEntry, 'id'>>>> {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+export const POST = withAuth(
+  async (request: NextRequest, { user }: { params: Record<string, string>; user: User }) => {
+    try {
+      const body = await request.json()
 
-    const body = await request.json()
-
-    // Sanitize scalar inputs; leave TipTap JSON structure intact
-    const sanitized = {
-      ...body,
-      title: validator.escape(validator.trim(String(body.title ?? ''))).substring(0, 200),
-      tags: Array.isArray(body.tags)
-        ? body.tags.map((t: unknown) => validator.escape(validator.trim(String(t))).substring(0, 40).toLowerCase()).slice(0, 10)
-        : []
-    }
-
-    const validatedData = createEntrySchema.parse({
-      ...sanitized,
-      content: body.content // keep original TipTap JSON for validation by Zod + our own validator
-    })
-
-    // Extract plain text from TipTap content for word count calculation
-    const plainText = toPlainText(validatedData.content)
-    const wordCount = plainText
-      .split(/\s+/)
-      .filter(Boolean)
-      .length
-    
-    // Serialize content to JSON string for storage (contentHtml is a misnomer, kept for backward compat)
-    const contentHtml = JSON.stringify(validatedData.content)
-    const sanitizedHtml = sanitizeHtml(contentHtml)
-    
-    // Create the entry
-    const entry = await db.journalEntry.create({
-      data: {
-        title: validatedData.title,
-        content: validatedData.content,
-        contentHtml: sanitizedHtml,
-        mood: validatedData.mood,
-        tags: validatedData.tags,
-        status: validatedData.status,
-        wordCount,
-        userId: session.user.id,
-        publishedAt: validatedData.status === 'PUBLISHED' ? new Date() : null,
-        // Initialize analysis fields will be computed later
+      // Sanitize scalar inputs; leave TipTap JSON structure intact
+      const sanitized = {
+        ...body,
+        title: validator.escape(validator.trim(String(body.title ?? ''))).substring(0, 200),
+        tags: Array.isArray(body.tags)
+          ? normalizeTags(body.tags.map((t: unknown) => String(t))).slice(0, 10)
+          : []
       }
-    })
 
-    // Audit log
-    const context = getAuditContext(request, session.user.id)
-    await createAuditLog(
-      {
-        action: 'CREATE',
-        resource: 'journal_entries',
-        resourceId: entry.id,
-        entryId: entry.id,
-        details: { 
-          title: entry.title, 
-          status: entry.status,
-          wordCount: entry.wordCount 
+      const validatedData = createEntrySchema.parse({
+        ...sanitized,
+        content: body.content // keep original TipTap JSON for validation
+      })
+
+      // Calculate word count from content
+      const wordCount = calculateWordCount(validatedData.content)
+      
+      // Serialize content to JSON string for storage
+      const contentHtml = JSON.stringify(validatedData.content)
+      const sanitizedHtml = sanitizeHtml(contentHtml)
+      
+      // Create the entry
+      const entry = await db.journalEntry.create({
+        data: {
+          title: validatedData.title,
+          content: validatedData.content,
+          contentHtml: sanitizedHtml,
+          mood: validatedData.mood,
+          tags: validatedData.tags,
+          status: validatedData.status,
+          wordCount,
+          userId: user.id,
+          publishedAt: validatedData.status === 'PUBLISHED' ? new Date() : null,
         }
-      },
-      context
-    )
+      })
 
-    return NextResponse.json(
-      { success: true, data: { id: entry.id }, message: 'Entry created successfully' },
-      { status: 201 }
-    )
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: error.errors[0]?.message || 'Validation error' },
-        { status: 400 }
-      )
+      return apiSuccess({ id: entry.id }, 'Entry created successfully', 201)
+    } catch (error) {
+      console.error('Create entry error:', error)
+      if (error instanceof z.ZodError) {
+        return badRequest(error.errors[0].message)
+      }
+      return serverError('Failed to create entry')
     }
-
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { auditAction: 'CREATE', auditResource: 'journal_entries' }
+)
 
 // Get user's journal entries
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<EntriesListResponse>>> {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    const { searchParams } = new URL(request.url)
-    const rawParams = Object.fromEntries(searchParams)
-    const parsedParams = {
-      ...rawParams,
-      status: rawParams.status,
-      search: rawParams.search ? validator.escape(validator.trim(String(rawParams.search))).substring(0, 100) : undefined
-    }
-    const { page, limit, status, search } = listEntriesSchema.parse(parsedParams)
-
-    const where: Prisma.JournalEntryWhereInput = {
-      userId: session.user.id
-    }
-
-    if (status) {
-      where.status = status
-    }
-
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' as const } },
-        { tags: { hasSome: [search.toLowerCase()] } }
-      ]
-    }
-
-
-    const [entries, total] = await Promise.all([
-      db.journalEntry.findMany({
-        where,
-        orderBy: { updatedAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-        select: {
-          id: true,
-          title: true,
-          content: false, // Don't include full content in list
-          mood: true,
-          tags: true,
-          status: true,
-          wordCount: true,
-          createdAt: true,
-          updatedAt: true,
-          publishedAt: true,
-          aiSummary: true,
-          aiSummaryAt: true,
-        }
-      }),
-      db.journalEntry.count({ where })
-    ])
-
-    const totalPages = Math.ceil(total / limit)
-
-    // Audit log
-    const context = getAuditContext(request, session.user.id)
-    await createAuditLog(
-      {
-        action: 'READ',
-        resource: 'journal_entries',
-        details: { 
-          page, 
-          limit, 
-          status, 
-          search, 
-          resultsCount: entries.length 
-        }
-      },
-      context
-    )
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        entries: entries.map(entry => ({
-          id: entry.id,
-          title: entry.title,
-          status: entry.status,
-          mood: entry.mood,
-          tags: entry.tags,
-          wordCount: entry.wordCount,
-          createdAt: entry.createdAt.toISOString(),
-          updatedAt: entry.updatedAt.toISOString(),
-          publishedAt: entry.publishedAt?.toISOString() || null,
-          aiSummary: entry.aiSummary,
-          aiSummaryAt: entry.aiSummaryAt?.toISOString() || null,
-        })),
-        total,
-        page,
-        totalPages
+export const GET = withAuth(
+  async (request: NextRequest, { user }: { params: Record<string, string>; user: User }) => {
+    try {
+      const { searchParams } = new URL(request.url)
+      const rawParams = Object.fromEntries(searchParams)
+      const parsedParams = {
+        ...rawParams,
+        search: rawParams.search 
+          ? validator.escape(validator.trim(String(rawParams.search))).substring(0, 100) 
+          : undefined
       }
-    })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid request parameters' },
-        { status: 400 }
-      )
-    }
+      const { page, limit, status, search } = listEntriesSchema.parse(parsedParams)
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
+      // Build where clause
+      const baseWhere = entryAccessibleByUser(user.id)
+      const whereConditions = [baseWhere]
+      
+      if (status) {
+        whereConditions.push({ status })
+      }
+      
+      if (search) {
+        whereConditions.push(entrySearchWhere(search))
+      }
+
+      const where = {
+        AND: whereConditions
+      }
+
+      // Fetch entries and count in parallel
+      const [entries, total] = await Promise.all([
+        db.journalEntry.findMany({
+          where,
+          ...paginationParams(page, limit),
+          orderBy: entryOrderBy('updatedAt', 'desc'),
+          select: {
+            id: true,
+            title: true,
+            content: false, // Don't include full content in list
+            mood: true,
+            tags: true,
+            status: true,
+            wordCount: true,
+            createdAt: true,
+            updatedAt: true,
+            publishedAt: true,
+            aiSummary: true,
+            aiSummaryAt: true,
+          }
+        }),
+        db.journalEntry.count({ where })
+      ])
+
+      return apiPaginated(entries, total, page, limit)
+    } catch (error) {
+      console.error('List entries error:', error)
+      if (error instanceof z.ZodError) {
+        return badRequest('Invalid request parameters')
+      }
+      return serverError('Failed to fetch entries')
+    }
+  },
+  { auditAction: 'READ', auditResource: 'journal_entries' }
+)

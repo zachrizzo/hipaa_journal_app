@@ -236,7 +236,7 @@ export async function GET(
         generatedAt: entry.aiSummaryAt?.toISOString() || new Date().toISOString()
       }
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch summary' },
       { status: 500 }

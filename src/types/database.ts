@@ -3,30 +3,7 @@ import type { User, Session, JournalEntry, EntryVersion, EntryShare, AuditLog, S
 export type { User, Session, JournalEntry, EntryVersion, EntryShare, AuditLog, SystemConfig }
 export type { UserRole, ShareScope, EntryStatus, AuditAction }
 
-// All types are already exported above or defined below
-
-// Database table map for legacy compatibility - use direct imports instead
-export const tableMap = {
-  users: {} as User,
-  sessions: {} as Session,
-  journal_entries: {} as JournalEntry,
-  entry_versions: {} as EntryVersion,
-  entry_shares: {} as EntryShare,
-  audit_logs: {} as AuditLog,
-  system_config: {} as SystemConfig
-}
-
-// Tables type helper for database-first pattern
-export type Tables<T extends keyof typeof tableMap> = typeof tableMap[T]
-
-// Database type placeholder for complex queries
-export interface Database {
-  public: {
-    Tables: typeof tableMap
-    Functions: Record<string, unknown>
-  }
-}
-
+// Database relation types
 export interface UserWithSessionsData extends User {
   sessions: Session[]
 }
@@ -60,6 +37,7 @@ export interface AuditLogWithUserData extends AuditLog {
 // Safe user data without sensitive fields - using type alias as it's a utility type
 export type SafeUserData = Omit<User, 'hashedPassword' | 'mfaSecret'>
 
+// Input types for creating/updating records
 export interface CreateUserInput extends Pick<User, 'email'> {
   firstName?: User['firstName']
   lastName?: User['lastName']

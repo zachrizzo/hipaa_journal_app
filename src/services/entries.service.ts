@@ -47,8 +47,13 @@ export class EntriesService {
       throw new Error(response.error || 'Failed to fetch entries')
     }
 
+    // Check if items exist in the response (apiPaginated returns 'items' not 'entries')
+    if (!response.data.items) {
+      return { entries: [], total: 0, page: 1, totalPages: 0 }
+    }
+
     // Transform response data to JournalEntry format
-    const entries = response.data.entries.map(entry => ({
+    const entries = response.data.items.map(entry => ({
       id: entry.id,
       title: entry.title,
       content: null, // Full content not returned in list

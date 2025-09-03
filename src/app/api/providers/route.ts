@@ -28,7 +28,7 @@ export async function GET(): Promise<NextResponse<ApiResponse<ProviderListRespon
       success: true,
       data: providers
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch providers' },
       { status: 500 }
