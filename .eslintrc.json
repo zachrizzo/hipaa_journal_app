@@ -82,13 +82,6 @@
   },
   "overrides": [
     {
-      "files": ["**/*.test.ts", "**/*.test.tsx"],
-      "rules": {
-        "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-unsafe-assignment": "off"
-      }
-    },
-    {
       "files": ["*.js"],
       "rules": {
         "@typescript-eslint/no-require-imports": "off"
