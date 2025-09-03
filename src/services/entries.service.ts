@@ -105,8 +105,13 @@ export class EntriesService {
     }
   }
 
-  async generateSummary(id: string): Promise<{ summary: string }> {
-    const response = await apiClient.post<{ summary: string }>(`/api/entries/${id}/summary`)
+  async generateSummary(id: string, saveToDatabase = true): Promise<{ summary: string; wordCount: number; generatedAt: string }> {
+    // Use 60 second timeout for summary generation as it can take longer
+    const response = await apiClient.post<{ summary: string; wordCount: number; generatedAt: string }>(
+      `/api/entries/${id}/summary`, 
+      { saveToDatabase },
+      60000 // 60 seconds timeout
+    )
 
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Failed to generate summary')

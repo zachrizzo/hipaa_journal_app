@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
@@ -23,11 +23,11 @@ export default function ViewSharedEntryPage({ params }: ViewSharedEntryPageProps
   const [error, setError] = useState('')
   const [shareId, setShareId] = useState<string | null>(null)
 
+  const resolvedParams = React.use(params)
+
   useEffect(() => {
-    params.then(resolvedParams => {
-      setShareId(resolvedParams.id)
-    })
-  }, [params])
+    setShareId(resolvedParams.id)
+  }, [resolvedParams])
 
 
   const fetchSharedEntry = useCallback(async (): Promise<void> => {

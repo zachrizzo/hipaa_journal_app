@@ -4,8 +4,8 @@
  */
 
 import { apiClient } from '@/lib/api/client'
-import type { User, UserRole } from '@/types/database'
-import type { RegisterRequestParams, LoginRequestParams, LoginResponse as ApiLoginResponse } from '@/types/api'
+import type { User } from '@/types/database'
+import type { RegisterRequestParams, LoginRequestParams } from '@/types/api'
 
 export type RegisterData = RegisterRequestParams
 

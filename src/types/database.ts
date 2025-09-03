@@ -16,6 +16,17 @@ export const tableMap = {
   system_config: {} as SystemConfig
 }
 
+// Tables type helper for database-first pattern
+export type Tables<T extends keyof typeof tableMap> = typeof tableMap[T]
+
+// Database type placeholder for complex queries
+export interface Database {
+  public: {
+    Tables: typeof tableMap
+    Functions: Record<string, unknown>
+  }
+}
+
 export interface UserWithSessionsData extends User {
   sessions: Session[]
 }

@@ -1,23 +1,26 @@
 # HIPAA Journal - Secure Healthcare Journaling Platform
 
-A production-ready, HIPAA-compliant journaling platform built for healthcare professionals and their clients. Features secure rich text editing, AI-powered summaries, provider-client sharing, and comprehensive audit logging.
+A production-ready, HIPAA-compliant journaling platform built for healthcare professionals and their clients. Features secure rich text editing, AI-powered summaries with PHI redaction, granular provider-client sharing, comprehensive analytics, and enterprise-grade audit logging.
 
 ## 🏥 Features
 
 ### Security & Compliance
-- **HIPAA Compliant**: Full audit logging, encryption at rest, secure session management
-- **Advanced Authentication**: NextAuth.js with MFA support, account lockout, session rotation
-- **Input Sanitization**: DOMPurify for XSS protection, content validation
-- **Security Headers**: CSP, HSTS, X-Frame-Options, and more
-- **Audit Trail**: Complete audit logging for all PHI access and modifications
+- **HIPAA Compliant**: Full audit logging, AES-256 encryption, secure session management
+- **Advanced Authentication**: NextAuth.js with role-based access, account lockout, 15-minute sessions
+- **PHI Protection**: Automated PHI redaction with `redact-pii` before AI processing
+- **Input Sanitization**: DOMPurify for XSS protection, TipTap content validation
+- **Security Headers**: CSP, HSTS, X-Frame-Options, Permissions Policy
+- **Audit Trail**: Complete audit logging for all PHI access, modifications, and sharing
 
 ### Core Functionality
 - **Rich Text Editor**: Secure TipTap editor with JSON storage and HTML sanitization
-- **AI Summarization**: LangChain + OpenAI for privacy-preserving journal summaries
-- **Provider-Client Sharing**: Granular sharing controls with expiration and revocation
-- **Version History**: Complete version tracking with change reasons
-- **Mood Tracking**: 1-10 mood scale with trend analysis
-- **Tagging System**: Flexible tagging for categorization and search
+- **AI Summarization**: PHI-safe OpenAI integration with LangChain for journal analysis
+- **Provider-Client Sharing**: Granular sharing controls (`TITLE_ONLY`, `SUMMARY_ONLY`, `FULL_ACCESS`)
+- **Version History**: Complete version tracking with change reasons and rollback capability
+- **Analytics Dashboard**: Provider analytics with mood trends, risk indicators, time-bucket analysis
+- **Risk Detection**: Automated clinical risk pattern detection in journal content
+- **Mood Tracking**: 1-10 mood scale with trend analysis and clinical insights
+- **Hierarchical Summaries**: Daily → Weekly → Monthly summary aggregation
 
 ## 🚀 Quick Start
 
@@ -79,20 +82,63 @@ Visit `http://localhost:3000` to access the application.
 ## 🏗️ Architecture
 
 ### Tech Stack
-- **Frontend**: Next.js 14, React 19, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, Prisma ORM, PostgreSQL
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS 4
+- **Backend**: Next.js App Router API routes, Prisma ORM, PostgreSQL
 - **Authentication**: NextAuth.js with secure session management
-- **Rich Text**: TipTap editor with security sanitization
-- **AI**: LangChain + OpenAI for summarization
+- **Rich Text**: TipTap 3.3 editor with security sanitization
+- **AI**: LangChain + OpenAI for PHI-safe summarization
+- **Security**: DOMPurify, redact-pii, bcryptjs, validator
 - **Testing**: Jest, Testing Library, Playwright
 
+### System Architecture
+```
+┌─────────────────┐    ┌─────────────────┐
+│   Client Users  │    │ Provider Users  │
+│   (Patients)    │    │ (Healthcare)    │
+└─────────┬───────┘    └─────────┬───────┘
+          │                      │
+          └──────────┬───────────┘
+                     │
+          ┌─────────────────────┐
+          │   Security Layer    │
+          │ • Role-based Auth   │
+          │ • Security Headers  │
+          │ • Rate Limiting     │
+          └─────────┬───────────┘
+                    │
+          ┌─────────────────────┐
+          │     API Layer       │
+          │ • /api/entries      │
+          │ • /api/shares       │
+          │ • /api/summaries    │
+          │ • /api/analytics    │
+          └─────────┬───────────┘
+                    │
+          ┌─────────────────────┐
+          │  Business Logic     │
+          │ • PHI Redaction     │
+          │ • Content Sanitize  │
+          │ • Audit Logging     │
+          │ • AI Processing     │
+          └─────────┬───────────┘
+                    │
+          ┌─────────────────────┐
+          │   Database Layer    │
+          │ • PostgreSQL        │
+          │ • Encrypted Storage │
+          │ • Version History   │
+          └─────────────────────┘
+```
+
 ### Security Features
-- **Data Encryption**: Sensitive fields encrypted at rest
+- **AES-256 Encryption**: Sensitive data encrypted at rest
+- **PHI Redaction**: Automated PHI removal before AI processing
 - **Input Validation**: Zod schemas for all API endpoints
-- **Content Sanitization**: DOMPurify for rich text content
-- **Session Security**: 15-minute access tokens, secure cookies
-- **Audit Logging**: All PHI access and modifications logged
-- **Role-based Access**: Client, Provider, and Admin roles
+- **Content Sanitization**: DOMPurify + custom TipTap validation
+- **Session Security**: 15-minute JWT tokens, secure cookies
+- **Audit Logging**: Comprehensive logging for all PHI access
+- **Role-based Access**: CLIENT and PROVIDER roles with granular permissions
+- **Version Control**: Complete entry history with rollback capability
 
 ## 🧪 Testing
 

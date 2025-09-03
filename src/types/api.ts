@@ -1,4 +1,4 @@
-import type { UserRole, ShareScope, EntryStatus, AuditAction, SafeUserData } from './database'
+import type { UserRole, ShareScope, EntryStatus, SafeUserData, JournalEntry, EntryVersion, EntryShare, User, AuditLog } from './database'
 
 export interface ApiResponse<T = unknown> {
   success: boolean

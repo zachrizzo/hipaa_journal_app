@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { createAuditLog, getAuditContext } from '@/lib/security/audit'
 import { sanitizeHtml } from '@/lib/security/sanitize'
+import validator from 'validator'
 import type { ApiResponse, EntriesListResponse } from '@/types/api'
 import type { Prisma } from '@prisma/client'
 import type { JournalEntry } from '@/types/database'
@@ -39,15 +40,34 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     const body = await request.json()
-    const validatedData = createEntrySchema.parse(body)
 
-    // Generate HTML content from TipTap JSON (simplified)
+    // Sanitize scalar inputs; leave TipTap JSON structure intact
+    const sanitized = {
+      ...body,
+      title: validator.escape(validator.trim(String(body.title ?? ''))).substring(0, 200),
+      tags: Array.isArray(body.tags)
+        ? body.tags.map((t: unknown) => validator.escape(validator.trim(String(t))).substring(0, 40)).slice(0, 10)
+        : []
+    }
+
+    const validatedData = createEntrySchema.parse({
+      ...sanitized,
+      content: body.content // keep original TipTap JSON for validation by Zod + our own validator
+    })
+
+    // Serialize content to HTML-like string for storage and sanitize
     const contentHtml = JSON.stringify(validatedData.content)
-    const sanitizedHtml = await sanitizeHtml(contentHtml)
+    const sanitizedHtml = sanitizeHtml(contentHtml)
 
-    // Calculate word count (simplified)
-    const wordCount = contentHtml.replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length
-
+    // Calculate word count by extracting text tokens
+    const wordCount = JSON.stringify(validatedData.content)
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/[^A-Za-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(Boolean)
+      .length
+    
+    // Create the entry
     const entry = await db.journalEntry.create({
       data: {
         title: validatedData.title,
@@ -58,7 +78,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         status: validatedData.status,
         wordCount,
         userId: session.user.id,
-        publishedAt: validatedData.status === 'PUBLISHED' ? new Date() : null
+        publishedAt: validatedData.status === 'PUBLISHED' ? new Date() : null,
+        // Initialize analysis fields will be computed later
       }
     })
 
@@ -112,7 +133,13 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     }
 
     const { searchParams } = new URL(request.url)
-    const { page, limit, status, search } = listEntriesSchema.parse(Object.fromEntries(searchParams))
+    const rawParams = Object.fromEntries(searchParams)
+    const parsedParams = {
+      ...rawParams,
+      status: rawParams.status,
+      search: rawParams.search ? validator.escape(validator.trim(String(rawParams.search))).substring(0, 100) : undefined
+    }
+    const { page, limit, status, search } = listEntriesSchema.parse(parsedParams)
 
     const where: Prisma.JournalEntryWhereInput = {
       userId: session.user.id
@@ -150,7 +177,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
           updatedAt: true,
           publishedAt: true,
           aiSummary: true,
-          aiSummaryAt: true
+          aiSummaryAt: true,
         }
       }),
       db.journalEntry.count({ where })
@@ -189,7 +216,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
           updatedAt: entry.updatedAt.toISOString(),
           publishedAt: entry.publishedAt?.toISOString() || null,
           aiSummary: entry.aiSummary,
-          aiSummaryAt: entry.aiSummaryAt?.toISOString() || null
+          aiSummaryAt: entry.aiSummaryAt?.toISOString() || null,
         })),
         total,
         page,

@@ -131,7 +131,7 @@ export function JournalEntryForm({
               Content *
             </Label>
             <RichTextEditor
-              content={formData.content}
+              content={formData.content as object}
               onChange={handleContentChange}
               editable={!isSubmitting}
               placeholder='Write about your day, thoughts, feelings...'

@@ -334,7 +334,8 @@ export async function getShareById(
           aiSummaryAt: true,
           createdAt: true,
           updatedAt: true,
-          wordCount: true
+          wordCount: true,
+          // analytics fields omitted; only include what's needed for sharing view
         }
       },
       provider: {
@@ -514,7 +515,7 @@ export async function getShareStatistics(
     revokedShares,
     sharesByScope,
     recentActivity: recentActivity.map(share => ({
-      action: share.isRevoked ? 'revoked' : 'shared',
+      action: share.isRevoked ? 'UNSHARE' : 'SHARE',
       entryTitle: share.entry.title,
       clientName: share.client.firstName && share.client.lastName ? `${share.client.firstName} ${share.client.lastName}` : share.client.firstName || share.client.lastName || 'Unknown',
       createdAt: share.createdAt

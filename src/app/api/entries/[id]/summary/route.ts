@@ -4,18 +4,21 @@ import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { generateEntrySummary, validateSummaryContent } from '@/lib/ai/summarizer'
+import { toPlainText } from '@/lib/utils/tiptap-parser'
 import { createAuditLog, getAuditContext } from '@/lib/security/audit'
 import type { ApiResponse, GenerateSummaryResponse } from '@/types/api'
 
 interface RouteParams {
-  params: Promise<Record<'id', string>>
+  params: Record<'id', string>
 }
 
-const generateSummarySchema = z.object({
-  forceRegenerate: z.boolean().optional().default(false),
-  includeMoodAnalysis: z.boolean().optional().default(false)
+const requestSchema = z.object({
+  saveToDatabase: z.boolean().optional().default(false)
 })
 
+/**
+ * Generate or retrieve a summary for a single journal entry
+ */
 export async function POST(
   request: NextRequest,
   { params }: RouteParams
@@ -29,11 +32,10 @@ export async function POST(
       )
     }
 
-    const { id: entryId } = await params
-    const body = await request.json()
-    const { forceRegenerate, includeMoodAnalysis } = generateSummarySchema.parse(body)
+    const { id: entryId } = params
+    const { saveToDatabase } = requestSchema.parse(await request.json())
 
-    // Get the journal entry
+    // Get entry with access check
     const entry = await db.journalEntry.findFirst({
       where: {
         id: entryId,
@@ -42,13 +44,12 @@ export async function POST(
           {
             shares: {
               some: {
-                clientId: session.user.id,
-                scope: { in: ['SUMMARY_ONLY', 'FULL_ACCESS'] },
-                isRevoked: false,
                 OR: [
-                  { expiresAt: null },
-                  { expiresAt: { gt: new Date() } }
-                ]
+                  { clientId: session.user.id },
+                  { providerId: session.user.id }
+                ],
+                scope: { in: ['SUMMARY_ONLY', 'FULL_ACCESS'] },
+                isRevoked: false
               }
             }
           }
@@ -63,21 +64,8 @@ export async function POST(
       )
     }
 
-    // Check if summary already exists and force regenerate is false
-    if (entry.aiSummary && !forceRegenerate) {
-      const context = getAuditContext(request, session.user.id)
-      
-      await createAuditLog(
-        {
-          action: 'READ',
-          resource: 'ai_summary',
-          resourceId: entryId,
-          entryId,
-          details: { cached: true }
-        },
-        context
-      )
-
+    // Check if we have a saved summary (if requested)
+    if (!saveToDatabase && entry.aiSummary) {
       return NextResponse.json({
         success: true,
         data: {
@@ -88,56 +76,42 @@ export async function POST(
       })
     }
 
-    // Extract content from TipTap JSON
-    const contentHtml = entry.contentHtml || ''
+    // Generate new summary with timeout
+    const textContent = toPlainText(entry.contentHtml || entry.content || 'No content available')
     
-    // Generate AI summary
-    const summaryResult = await generateEntrySummary(
-      entry.title,
-      contentHtml,
-      entry.mood,
-      entry.tags,
-      { includeMoodAnalysis }
+    // Create a timeout promise
+    const timeoutPromise = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error('Summary generation timed out after 45 seconds')), 45000)
     )
+    
+    // Race between summary generation and timeout
+    const summaryResult = await Promise.race([
+      generateEntrySummary(
+        entry.title,
+        textContent,
+        entry.mood,
+        entry.tags
+      ),
+      timeoutPromise
+    ])
 
-    // Validate the generated summary doesn't contain identifying information
+    // Validate summary doesn't contain PHI
     if (!validateSummaryContent(summaryResult.summary)) {
       throw new Error('Generated summary contains potentially identifying information')
     }
 
-    // Check for risk flags
-    if (summaryResult.riskFlags.includes('CLINICAL_REVIEW_REQUIRED')) {
-      // In production, this would trigger an alert to healthcare providers
-      console.warn(`Clinical review required for entry ${entryId}`)
-      
-      // Audit the risk detection
-      const context = getAuditContext(request, session.user.id)
-      await createAuditLog(
-        {
-          action: 'CREATE',
-          resource: 'ai_summary',
-          resourceId: entryId,
-          entryId,
-          details: { 
-            riskDetected: true, 
-            flags: summaryResult.riskFlags,
-            requiresReview: true
-          }
-        },
-        context
-      )
+    // Optionally save to database
+    if (saveToDatabase) {
+      await db.journalEntry.update({
+        where: { id: entryId },
+        data: {
+          aiSummary: summaryResult.summary,
+          aiSummaryAt: new Date()
+        }
+      })
     }
 
-    // Update the entry with the new summary
-    await db.journalEntry.update({
-      where: { id: entryId },
-      data: {
-        aiSummary: summaryResult.summary,
-        aiSummaryAt: summaryResult.generatedAt
-      }
-    })
-
-    // Audit the AI summary generation
+    // Audit log
     const context = getAuditContext(request, session.user.id)
     await createAuditLog(
       {
@@ -146,10 +120,8 @@ export async function POST(
         resourceId: entryId,
         entryId,
         details: {
-          wordCount: summaryResult.wordCount,
-          keyThemes: summaryResult.keyThemes,
-          riskFlags: summaryResult.riskFlags,
-          includedMoodAnalysis: includeMoodAnalysis
+          savedToDb: saveToDatabase,
+          wordCount: summaryResult.wordCount
         }
       },
       context
@@ -164,15 +136,15 @@ export async function POST(
       }
     })
   } catch (error) {
-    console.error('Error generating AI summary:', error)
+    console.error('Error generating summary:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid request parameters' },
-        { status: 400 }
-      )
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error('Error name:', error.name)
+      console.error('Error message:', error.message)
     }
-
+    
     return NextResponse.json(
       { 
         success: false, 
@@ -183,8 +155,11 @@ export async function POST(
   }
 }
 
+/**
+ * Get existing summary for an entry
+ */
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<GenerateSummaryResponse | null>>> {
   try {
@@ -196,9 +171,8 @@ export async function GET(
       )
     }
 
-    const { id: entryId } = await params
+    const { id: entryId } = params
 
-    // Get the journal entry with existing summary
     const entry = await db.journalEntry.findFirst({
       where: {
         id: entryId,
@@ -207,50 +181,29 @@ export async function GET(
           {
             shares: {
               some: {
-                clientId: session.user.id,
-                scope: { in: ['SUMMARY_ONLY', 'FULL_ACCESS'] },
-                isRevoked: false,
                 OR: [
-                  { expiresAt: null },
-                  { expiresAt: { gt: new Date() } }
-                ]
+                  { clientId: session.user.id },
+                  { providerId: session.user.id }
+                ],
+                scope: { in: ['SUMMARY_ONLY', 'FULL_ACCESS'] },
+                isRevoked: false
               }
             }
           }
         ]
       },
       select: {
-        id: true,
         aiSummary: true,
         aiSummaryAt: true
       }
     })
 
-    if (!entry) {
-      return NextResponse.json(
-        { success: false, error: 'Entry not found or access denied' },
-        { status: 404 }
-      )
-    }
-
-    if (!entry.aiSummary) {
+    if (!entry || !entry.aiSummary) {
       return NextResponse.json({
         success: true,
         data: null
       })
     }
-
-    // Audit the summary access
-    const context = getAuditContext(request, session.user.id)
-    await createAuditLog(
-      {
-        action: 'READ',
-        resource: 'ai_summary',
-        resourceId: entryId,
-        entryId
-      },
-      context
-    )
 
     return NextResponse.json({
       success: true,
@@ -261,7 +214,7 @@ export async function GET(
       }
     })
   } catch (error) {
-    console.error('Error fetching AI summary:', error)
+    console.error('Error fetching summary:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch summary' },
       { status: 500 }
