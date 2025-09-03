@@ -13,7 +13,7 @@ import { sharingService } from '@/services'
 import type { EntryShareWithRelationsData } from '@/types/database'
 
 interface ViewSharedEntryPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default function ViewSharedEntryPage({ params }: ViewSharedEntryPageProps): React.JSX.Element {
@@ -21,8 +21,17 @@ export default function ViewSharedEntryPage({ params }: ViewSharedEntryPageProps
   const [shareData, setShareData] = useState<EntryShareWithRelationsData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  const shareId = params.id
+  const [shareId, setShareId] = useState<string | null>(null)
 
+
+  // Get params on mount
+  useEffect(() => {
+    const getParams = async (): Promise<void> => {
+      const resolvedParams = await params
+      setShareId(resolvedParams.id)
+    }
+    getParams()
+  }, [params])
 
   const fetchSharedEntry = useCallback(async (): Promise<void> => {
     if (!shareId) return

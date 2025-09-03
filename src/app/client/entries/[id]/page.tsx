@@ -183,7 +183,7 @@ export default function ViewEntryPage({ params }: ViewEntryPageProps): React.JSX
             <AlertDialogAction
               onClick={handleDeleteEntry}
               disabled={isDeleting}
-              className="bg-destructive hover:bg-destructive/90"
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               {isDeleting ? 'Deleting...' : 'Delete Entry'}
             </AlertDialogAction>

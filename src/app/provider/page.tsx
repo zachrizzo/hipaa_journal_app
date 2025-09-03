@@ -34,6 +34,7 @@ export default function ProviderDashboard(): React.JSX.Element {
   const [combinedSummary, setCombinedSummary] = useState<any>(null)
   const [showSummaryTree, setShowSummaryTree] = useState(false)
   const [summaryErrors, setSummaryErrors] = useState<string[]>([])
+  const [isPostProcessing, setIsPostProcessing] = useState(false)
 
   const headerActions = null // Provider dashboard doesn't need header actions in nav
 
@@ -85,8 +86,10 @@ export default function ProviderDashboard(): React.JSX.Element {
       }
     }
 
-    // Refresh the entries to show new summaries
-    await refetch()
+    // Mark generation as complete but start post-processing
+    setIsGeneratingSummaries(false)
+    setSummaryProgress({ current: 0, total: 0 })
+    setIsPostProcessing(true)
 
     // Show result message
     if (errorCount === 0) {
@@ -102,12 +105,16 @@ export default function ProviderDashboard(): React.JSX.Element {
       setSummaryErrors(errors)
     }
 
-    setIsGeneratingSummaries(false)
-    setSummaryProgress({ current: 0, total: 0 })
-    
-    // Generate combined summary after individual summaries
-    if (successCount > 0) {
-      await generateCombinedSummary()
+    try {
+      // Refresh the entries to show new summaries
+      await refetch()
+      
+      // Generate combined summary after individual summaries
+      if (successCount > 0) {
+        await generateCombinedSummary()
+      }
+    } finally {
+      setIsPostProcessing(false)
     }
   }
   
@@ -155,7 +162,7 @@ export default function ProviderDashboard(): React.JSX.Element {
               variant='gradient' 
               size='lg' 
               onClick={generateSummariesForAll}
-              disabled={isGeneratingSummaries || entriesLoading || sharedEntries.length === 0}
+              disabled={isGeneratingSummaries || isPostProcessing || entriesLoading || sharedEntries.length === 0}
             >
               {isGeneratingSummaries ? (
                 <div className="flex items-center gap-3">
@@ -176,7 +183,7 @@ export default function ProviderDashboard(): React.JSX.Element {
               variant="outline"
               size="lg"
               onClick={() => setShowSummaryTree(true)}
-              disabled={!combinedSummary || isGeneratingSummaries}
+              disabled={!combinedSummary || isGeneratingSummaries || isPostProcessing}
             >
               <Brain className='w-5 h-5 mr-2' />
               View AI Summary
@@ -220,6 +227,16 @@ export default function ProviderDashboard(): React.JSX.Element {
             )}
           </AlertDescription>
         </Alert>
+      )}
+
+      {/* Post-Processing Loading Indicator */}
+      {isPostProcessing && (
+        <div className="mb-6 flex items-center justify-center gap-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+          <Text size="sm" className="text-blue-700">
+            Updating entries and generating combined analysis...
+          </Text>
+        </div>
       )}
       
       {/* AI Summary Analysis */}
