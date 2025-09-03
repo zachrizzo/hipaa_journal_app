@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { createAuditLog, getAuditContext } from '@/lib/security/audit'
-import { sanitizeHtml } from '@/lib/security/sanitize'
+import { toPlainText } from '@/lib/utils/tiptap-parser'
 import type { ApiResponse } from '@/types/api'
 import type { JournalEntry } from '@/types/database'
 
@@ -115,10 +115,12 @@ export async function PUT(
 
     // Handle content update
     if (validatedData.content) {
-      const contentHtml = JSON.stringify(validatedData.content)
-      const sanitizedHtml = await sanitizeHtml(contentHtml)
-      updateData.contentHtml = sanitizedHtml
-      updateData.wordCount = contentHtml.replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length
+      // Extract plain text from TipTap JSON for word count
+      const plainText = toPlainText(validatedData.content)
+      updateData.wordCount = plainText.split(/\s+/).filter(word => word.length > 0).length
+      
+      // Store JSON for now, render to HTML client-side
+      updateData.contentHtml = JSON.stringify(validatedData.content)
     }
 
     // Handle status change to published

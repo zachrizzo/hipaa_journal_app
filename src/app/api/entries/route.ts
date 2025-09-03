@@ -47,7 +47,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       ...body,
       title: validator.escape(validator.trim(String(body.title ?? ''))).substring(0, 200),
       tags: Array.isArray(body.tags)
-        ? body.tags.map((t: unknown) => validator.escape(validator.trim(String(t))).substring(0, 40)).slice(0, 10)
+        ? body.tags.map((t: unknown) => validator.escape(validator.trim(String(t))).substring(0, 40).toLowerCase()).slice(0, 10)
         : []
     }
 

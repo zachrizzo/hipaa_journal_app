@@ -13,7 +13,7 @@ interface TiptapNode {
 /**
  * Extract plain text from Tiptap JSON content
  */
-export function extractTextFromTiptap(content: any): string {
+export function extractTextFromTiptap(content: unknown): string {
   // If it's already a string, return it
   if (typeof content === 'string') {
     return content
@@ -26,7 +26,7 @@ export function extractTextFromTiptap(content: any): string {
 
   // Parse Tiptap JSON structure
   try {
-    return extractTextFromNode(content)
+    return extractTextFromNode(content as TiptapNode)
   } catch {
     // Fallback to simple string representation
     return JSON.stringify(content)
@@ -67,7 +67,7 @@ function extractTextFromNode(node: TiptapNode): string {
 /**
  * Extract text with basic structure preservation
  */
-export function extractStructuredText(content: any): string {
+export function extractStructuredText(content: unknown): string {
   if (typeof content === 'string') {
     return content
   }
@@ -97,7 +97,7 @@ export function extractStructuredText(content: any): string {
         .join('\n\n')
     }
     
-    return extractTextFromNode(content)
+    return extractTextFromNode(content as TiptapNode)
   } catch {
     return typeof content === 'object' ? JSON.stringify(content) : String(content)
   }
@@ -115,7 +115,7 @@ export function toPlainText(content: unknown): string {
     try {
       const parsed = JSON.parse(content)
       if (parsed && typeof parsed === 'object') {
-        return extractTextFromTiptap(parsed as any)
+        return extractTextFromTiptap(parsed)
       }
     } catch {
       // Not JSON, return as-is
@@ -124,7 +124,7 @@ export function toPlainText(content: unknown): string {
   }
 
   if (content && typeof content === 'object') {
-    return extractTextFromTiptap(content as any)
+    return extractTextFromTiptap(content)
   }
 
   return String(content)

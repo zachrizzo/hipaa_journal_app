@@ -1,6 +1,7 @@
 import { db } from '@/lib/db'
-import { sanitizeHtml, validateTipTapContent } from '@/lib/security/sanitize'
+import { validateTipTapContent } from '@/lib/security/sanitize'
 import { auditEntryAccess } from '@/lib/security/audit'
+import { toPlainText } from '@/lib/utils/tiptap-parser'
 import type { Prisma } from '@prisma/client'
 import type { 
   JournalEntry, 
@@ -22,8 +23,13 @@ export async function createEntry(
     throw new Error('Invalid content format')
   }
 
-  const contentHtml = sanitizeHtml(JSON.stringify(data.content))
-  const wordCount = estimateWordCount(contentHtml)
+  // Extract plain text from TipTap JSON for word count
+  const plainText = toPlainText(data.content)
+  const wordCount = plainText.split(/\s+/).filter(word => word.length > 0).length
+  
+  // Generate sanitized HTML for display (we'll need to implement TipTap to HTML conversion)
+  // For now, store the JSON and we'll render it client-side
+  const contentHtml = JSON.stringify(data.content)
 
   const entry = await db.journalEntry.create({
     data: {
@@ -32,7 +38,7 @@ export async function createEntry(
       contentHtml,
       status: data.status || 'DRAFT',
       mood: data.mood,
-      tags: data.tags || [],
+      tags: (data.tags || []).map(tag => tag.toLowerCase()),
       wordCount,
       userId,
       publishedAt: data.status === 'PUBLISHED' ? new Date() : null
@@ -112,7 +118,7 @@ export async function getEntriesForUser(
     }),
     ...(tags && tags.length > 0 && {
       tags: {
-        hasSome: tags
+        hasSome: tags.map(tag => tag.toLowerCase())
       }
     })
   }
@@ -171,13 +177,18 @@ export async function updateEntry(
         : existingEntry.publishedAt
     }),
     ...(data.mood !== undefined && { mood: data.mood }),
-    ...(data.tags && { tags: data.tags })
+    ...(data.tags && { tags: data.tags.map(tag => tag.toLowerCase()) })
   }
 
   if (data.content) {
     updateData.content = data.content
-    updateData.contentHtml = sanitizeHtml(JSON.stringify(data.content))
-    updateData.wordCount = estimateWordCount(updateData.contentHtml)
+    
+    // Extract plain text from TipTap JSON for word count
+    const plainText = toPlainText(data.content)
+    updateData.wordCount = plainText.split(/\s+/).filter(word => word.length > 0).length
+    
+    // Store JSON for now, render to HTML client-side
+    updateData.contentHtml = JSON.stringify(data.content)
   }
 
   const entry = await db.journalEntry.update({
@@ -311,7 +322,3 @@ async function getNextVersionNumber(entryId: string): Promise<number> {
   return (lastVersion?.versionNumber || 0) + 1
 }
 
-function estimateWordCount(html: string): number {
-  const text = html.replace(/<[^>]*>/g, ' ').trim()
-  return text ? text.split(/\s+/).length : 0
-}
