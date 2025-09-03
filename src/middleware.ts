@@ -17,25 +17,43 @@ export default withAuth(
       response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
     }
 
-    // Generate nonce for inline scripts
-    const nonce = Buffer.from(Math.random().toString(36).substring(2, 15)).toString('base64')
-    response.headers.set('X-Script-Nonce', nonce)
-
-    // Content Security Policy - More secure without unsafe-eval
-    const csp = [
-      "default-src 'self'",
-      `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https: http:`, // Strict dynamic for Next.js
-      "style-src 'self' 'unsafe-inline'", // Still needed for styled-jsx
-      "img-src 'self' data: https: blob:",
-      "font-src 'self'",
-      "connect-src 'self' https://api.openai.com",
-      "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "object-src 'none'",
-      "upgrade-insecure-requests"
-    ].join('; ')
-    
-    response.headers.set('Content-Security-Policy', csp)
+    // For production, use a more permissive CSP that works with Next.js
+    // In production, Next.js handles CSP differently
+    if (process.env.NODE_ENV === 'production') {
+      // Production CSP - more permissive for Next.js
+      const csp = [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https: http:", // Next.js needs these
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https: blob:",
+        "font-src 'self'",
+        "connect-src 'self' https://api.openai.com",
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "object-src 'none'",
+        "upgrade-insecure-requests"
+      ].join('; ')
+      
+      response.headers.set('Content-Security-Policy', csp)
+    } else {
+      // Development CSP - with nonce
+      const nonce = Buffer.from(Math.random().toString(36).substring(2, 15)).toString('base64')
+      response.headers.set('X-Script-Nonce', nonce)
+      
+      const csp = [
+        "default-src 'self'",
+        `script-src 'self' 'nonce-${nonce}' 'unsafe-eval'`, // unsafe-eval needed for Next.js
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https: blob:",
+        "font-src 'self'",
+        "connect-src 'self' https://api.openai.com",
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "object-src 'none'"
+      ].join('; ')
+      
+      response.headers.set('Content-Security-Policy', csp)
+    }
 
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
     const { pathname } = req.nextUrl
