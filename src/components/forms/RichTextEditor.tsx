@@ -63,7 +63,6 @@ export function RichTextEditor({
       
       // Validate content structure
       if (!validateTipTapContent(json)) {
-        console.warn('Invalid content structure detected')
         return
       }
 

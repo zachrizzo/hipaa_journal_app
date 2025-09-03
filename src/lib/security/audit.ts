@@ -29,7 +29,7 @@ export async function createAuditLog(
       }
     })
   } catch (error) {
-    console.error('Failed to create audit log:', error)
+    // Silently fail to avoid logging sensitive information
   }
 }
 
@@ -124,7 +124,7 @@ export function getAuditContext(request: Request | null | undefined, userId?: st
       }
     }
   } catch (error) {
-    console.warn('Error extracting audit context:', error)
+    // Silently handle context extraction errors
   }
 
   return {

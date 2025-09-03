@@ -218,15 +218,6 @@ export async function POST(
       }
     })
   } catch (error) {
-    console.error('Error generating combined summary:', error)
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
-    
-    // Log more details about the error
-    if (error instanceof Error) {
-      console.error('Error name:', error.name)
-      console.error('Error message:', error.message)
-    }
-    
     return NextResponse.json(
       { 
         success: false, 

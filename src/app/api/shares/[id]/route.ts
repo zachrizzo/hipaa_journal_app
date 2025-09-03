@@ -120,7 +120,6 @@ export async function GET(
       data: responseData
     })
   } catch (error) {
-    console.error('Error fetching share:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch share' },
       { status: 500 }
@@ -173,8 +172,6 @@ export async function PUT(
       data: { message: 'Share updated successfully' }
     })
   } catch (error) {
-    console.error('Error updating share:', error)
-    
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: error.errors[0]?.message || 'Validation error' },
@@ -226,8 +223,6 @@ export async function DELETE(
       data: { message: 'Share revoked successfully' }
     })
   } catch (error) {
-    console.error('Error revoking share:', error)
-    
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: error.errors[0]?.message || 'Validation error' },

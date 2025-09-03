@@ -116,8 +116,7 @@ export const authOptions: NextAuthOptions = {
             lastName: user.lastName,
             role: user.role
           }
-        } catch (error) {
-          console.error('Authentication error:', error)
+        } catch {
           return null
         }
       }

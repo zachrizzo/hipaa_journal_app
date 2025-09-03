@@ -71,7 +71,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       )
     }
 
-    console.error('Registration error:', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

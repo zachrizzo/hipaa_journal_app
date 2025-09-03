@@ -68,7 +68,6 @@ class ApiClient {
       // Handle timeout error
       if ((error as Error).name === 'AbortError') {
         if (retries > 0) {
-          console.warn(`Request timed out, retrying... (${retries} retries left)`)
           return this.request<T>(endpoint, options, retries - 1)
         }
         throw new ApiError('Request timeout', 408, error)
@@ -76,7 +75,6 @@ class ApiClient {
 
       // Handle network errors with retry
       if (retries > 0 && (error as Error).message.includes('fetch')) {
-        console.warn(`Network error, retrying... (${retries} retries left)`)
         await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second before retry
         return this.request<T>(endpoint, options, retries - 1)
       }

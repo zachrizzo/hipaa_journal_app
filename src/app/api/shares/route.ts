@@ -82,8 +82,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       { status: 201 }
     )
   } catch (error) {
-    console.error('Error creating share:', error)
-    
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: error.errors[0]?.message || 'Validation error' },
@@ -184,8 +182,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       data: transformedShares
     })
   } catch (error) {
-    console.error('Error fetching shares:', error)
-    
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Invalid query parameters' },

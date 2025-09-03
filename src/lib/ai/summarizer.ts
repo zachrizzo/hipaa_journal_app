@@ -75,7 +75,6 @@ export async function generateEntrySummary(
 ): Promise<SummaryResult> {
   try {
     // Avoid logging PHI; log only lengths/flags
-    console.log('Generating AI summary for:', { titleLength: title?.length, contentLength: content?.length, mood })
     
     // Prepare inputs via centralized processor
     const prepared = ContentProcessor.prepareForAI(content, { maxLength: 1500 })
@@ -151,7 +150,6 @@ export async function generateEntrySummary(
           keyThemes = []
         }
     } catch (aiError) {
-      console.error('AI generation failed:', aiError)
       throw new Error(`Failed to generate AI summary: ${aiError instanceof Error ? aiError.message : 'Unknown error'}`)
     }
     
@@ -168,7 +166,6 @@ export async function generateEntrySummary(
       generatedAt: new Date()
     }
   } catch (error) {
-    console.error('Error generating summary:', error)
     throw new Error('Failed to generate summary')
   }
 }
@@ -269,7 +266,6 @@ export async function generateCombinedSummary(
           keyThemes = []
         }
     } catch (aiError) {
-      console.error('AI combined summary failed:', aiError)
       throw new Error(`Failed to generate combined AI summary: ${aiError instanceof Error ? aiError.message : 'Unknown error'}`)
     }
     
@@ -286,7 +282,6 @@ export async function generateCombinedSummary(
       generatedAt: new Date()
     }
   } catch (error) {
-    console.error('Error generating combined summary:', error)
     throw new Error('Failed to generate combined summary')
   }
 }

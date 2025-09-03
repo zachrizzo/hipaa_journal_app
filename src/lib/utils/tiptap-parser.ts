@@ -27,8 +27,7 @@ export function extractTextFromTiptap(content: any): string {
   // Parse Tiptap JSON structure
   try {
     return extractTextFromNode(content)
-  } catch (error) {
-    console.error('Error parsing Tiptap content:', error)
+  } catch {
     // Fallback to simple string representation
     return JSON.stringify(content)
   }
@@ -99,8 +98,7 @@ export function extractStructuredText(content: any): string {
     }
     
     return extractTextFromNode(content)
-  } catch (error) {
-    console.error('Error extracting structured text:', error)
+  } catch {
     return typeof content === 'object' ? JSON.stringify(content) : String(content)
   }
 }

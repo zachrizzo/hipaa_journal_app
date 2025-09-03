@@ -47,7 +47,6 @@ export function useEntries({ session, type, search, status }: UseEntriesProps) {
         setEntries(filtered)
       }
     } catch (error) {
-      console.error(`Failed to fetch ${type} entries:`, error)
       setError(error instanceof Error ? error.message : 'Failed to fetch entries')
       setEntries([])
     } finally {

@@ -105,8 +105,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       { status: 201 }
     )
   } catch (error) {
-    console.error('Error creating entry:', error)
-    
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: error.errors[0]?.message || 'Validation error' },
@@ -156,8 +154,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       ]
     }
 
-    // Debug logging
-    console.log('Search query:', { search, status, where })
 
     const [entries, total] = await Promise.all([
       db.journalEntry.findMany({
@@ -224,8 +220,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       }
     })
   } catch (error) {
-    console.error('Error fetching entries:', error)
-    
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Invalid request parameters' },

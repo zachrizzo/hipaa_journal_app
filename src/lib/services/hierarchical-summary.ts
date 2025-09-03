@@ -121,18 +121,9 @@ export class HierarchicalSummaryService {
         period === 'WEEK' ? 'weekly' : period === 'MONTH' ? 'monthly' : 'custom',
         { dateRange: { start: windowStart.toISOString(), end: now.toISOString() } }
       )
-      console.log(`Generated ${period} AI combined overview for user ${userId}:`, {
-        wordCount: combined.wordCount,
-        themes: combined.keyThemes,
-      })
     } catch {}
 
-    // Store/log the periodic summary (would need a new table in production)
-    console.log(`Generated ${period} summary for user ${userId}:`, {
-      bulletCount: salientContent.bullets.length,
-      themes: salientContent.themes.map(t => t.name),
-      overallSentiment: salientContent.sentiment.overall,
-    });
+    // Store the periodic summary (would need a new table in production)
   }
 
   /**

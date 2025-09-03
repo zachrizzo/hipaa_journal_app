@@ -68,7 +68,6 @@ export async function GET(
       data: entry as JournalEntry
     })
   } catch (error) {
-    console.error('Error fetching entry:', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
@@ -155,8 +154,6 @@ export async function PUT(
       data: updatedEntry as JournalEntry
     })
   } catch (error) {
-    console.error('Error updating entry:', error)
-    
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: error.errors[0]?.message || 'Validation error' },
@@ -256,7 +253,6 @@ export async function DELETE(
       { status: 200 }
     )
   } catch (error) {
-    console.error('Error deleting entry:', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

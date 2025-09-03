@@ -37,7 +37,6 @@ export default function ProviderDashboard(): React.JSX.Element {
   const headerActions = null // Provider dashboard doesn't need header actions in nav
 
   const generateSummariesForAll = async (): Promise<void> => {
-    console.log('Generate summaries for all clicked', { entriesCount: sharedEntries.length })
     
     if (sharedEntries.length === 0) {
       setSummaryMessage({ type: 'error', message: 'No entries to generate summaries for' })
@@ -58,15 +57,11 @@ export default function ProviderDashboard(): React.JSX.Element {
       setSummaryProgress({ current: i + 1, total: sharedEntries.length })
 
       try {
-        console.log(`Generating summary for entry ${i + 1}/${sharedEntries.length}:`, entry.id, entry.title)
         
         // Only generate summary if it doesn't exist
         if (!entry.aiSummary) {
           await entriesService.generateSummary(entry.id, true) // Save to database
           successCount++
-          console.log(`Successfully generated summary for: ${entry.title}`)
-        } else {
-          console.log(`Entry already has summary, skipping: ${entry.title}`)
         }
       } catch (error) {
         errorCount++
@@ -86,7 +81,6 @@ export default function ProviderDashboard(): React.JSX.Element {
         }
         
         errors.push(`${entry.title}: ${errorMessage}`)
-        console.error(`Error generating summary for ${entry.title}:`, error)
       }
     }
 
@@ -105,7 +99,6 @@ export default function ProviderDashboard(): React.JSX.Element {
         message: `Generated ${successCount} summaries, but ${errorCount} failed.` 
       })
       setSummaryErrors(errors)
-      console.error('Summary generation errors:', errors)
     }
 
     setIsGeneratingSummaries(false)
@@ -138,7 +131,7 @@ export default function ProviderDashboard(): React.JSX.Element {
       setCombinedSummary(data.data)
       setShowSummaryTree(true)
     } catch (error) {
-      console.error('Error generating combined summary:', error)
+      // Error generating combined summary
     }
   }
   

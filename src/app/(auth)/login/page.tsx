@@ -120,7 +120,6 @@ export default function LoginPage(): React.JSX.Element {
         }
       }
     } catch (error) {
-      console.error('Quick login error:', error)
       setLoginError('Quick login failed')
       setIsLoading(false)
     }
