@@ -233,20 +233,20 @@ export default function LoginPage(): React.JSX.Element {
                 size="sm"
                 className='w-full'
                 disabled={isLoading}
-                onClick={() => handleQuickLogin('emily.smith@example.com', 'SecurePass123!@#')}
+                onClick={() => handleQuickLogin('john.doe.client@example.com', 'SecurePass123!@#')}
               >
                 <User className='w-4 h-4 mr-2' />
-                Login as Client (Emily Smith)
+                Login as Client (John Doe)
               </Button>
               <Button
                 variant="outline-secondary"
                 size="sm"
                 className='w-full'
                 disabled={isLoading}
-                onClick={() => handleQuickLogin('dr.robert.chen@example.com', 'SecurePass123!@#')}
+                onClick={() => handleQuickLogin('provider@gmail.com', 'Provider123456!')}
               >
                 <Stethoscope className='w-4 h-4 mr-2' />
-                Login as Provider (Dr. Robert Chen)
+                Login as Provider (Dr. Sarah Provider)
               </Button>
             </div>
             <Text size='xs' variant='muted' align='center' leading='relaxed' className='mt-3'>
