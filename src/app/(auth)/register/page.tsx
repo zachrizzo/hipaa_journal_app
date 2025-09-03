@@ -12,8 +12,10 @@ import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Text } from '@/components/ui/text'
 import { Heading } from '@/components/ui/heading'
-import { UserPlus, Mail, Lock, User, AlertCircle, Loader2 } from 'lucide-react'
+import { UserPlus, Mail, Lock, User, AlertCircle, Loader2, Stethoscope } from 'lucide-react'
 import { RegisterRequestParams } from '@/types/api'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import type { UserRole } from '@/types/database'
 
 const registerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -47,6 +49,7 @@ export default function RegisterPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(false)
   const [registerError, setRegisterError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const [selectedRole, setSelectedRole] = useState<UserRole>('CLIENT')
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -64,7 +67,7 @@ export default function RegisterPage(): React.JSX.Element {
         lastName: validatedData.lastName,
         email: validatedData.email,
         password: validatedData.password,
-        role: 'CLIENT' // Default role for registration
+        role: selectedRole
       })
 
       setSuccessMessage('Registration successful! Redirecting to login...')
@@ -108,10 +111,33 @@ export default function RegisterPage(): React.JSX.Element {
             Create Account
           </Heading>
           <CardDescription className='mt-2'>
-            Join HIPAA Journal - Secure journaling for healthcare professionals
+            Join HIPAA Journal - Secure journaling for healthcare
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <Tabs value={selectedRole} onValueChange={(value) => setSelectedRole(value as UserRole)} className="w-full mb-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="CLIENT" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Client
+              </TabsTrigger>
+              <TabsTrigger value="PROVIDER" className="flex items-center gap-2">
+                <Stethoscope className="w-4 h-4" />
+                Provider
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="CLIENT" className="mt-4">
+              <Text size="sm" className="text-center text-muted-foreground">
+                Register as a client to journal and share entries with healthcare providers
+              </Text>
+            </TabsContent>
+            <TabsContent value="PROVIDER" className="mt-4">
+              <Text size="sm" className="text-center text-muted-foreground">
+                Register as a healthcare provider to view shared journal entries from clients
+              </Text>
+            </TabsContent>
+          </Tabs>
+          
           <form onSubmit={handleSubmit} className='space-y-6'>
             <div className='flex space-x-4'>
               <div className='flex-1 space-y-2'>
