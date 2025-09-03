@@ -61,7 +61,13 @@ export default withAuth(
         const { pathname } = req.nextUrl
 
         // Allow access to auth pages without token
-        if (pathname.startsWith('/auth/')) {
+        if (pathname === '/login' || pathname === '/register' || 
+            pathname.startsWith('/auth/')) {
+          return true
+        }
+
+        // Allow access to root page (it handles its own redirects)
+        if (pathname === '/') {
           return true
         }
 
