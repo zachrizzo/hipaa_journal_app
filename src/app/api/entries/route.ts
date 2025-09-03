@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { createAuditLog, getAuditContext } from '@/lib/security/audit'
 import { sanitizeHtml } from '@/lib/security/sanitize'
+import { toPlainText } from '@/lib/utils/tiptap-parser'
 import validator from 'validator'
 import type { ApiResponse, EntriesListResponse } from '@/types/api'
 import type { Prisma } from '@prisma/client'
@@ -55,17 +56,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       content: body.content // keep original TipTap JSON for validation by Zod + our own validator
     })
 
-    // Serialize content to HTML-like string for storage and sanitize
-    const contentHtml = JSON.stringify(validatedData.content)
-    const sanitizedHtml = sanitizeHtml(contentHtml)
-
-    // Calculate word count by extracting text tokens
-    const wordCount = JSON.stringify(validatedData.content)
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/[^A-Za-z0-9\s]/g, ' ')
+    // Extract plain text from TipTap content for word count calculation
+    const plainText = toPlainText(validatedData.content)
+    const wordCount = plainText
       .split(/\s+/)
       .filter(Boolean)
       .length
+    
+    // Serialize content to JSON string for storage (contentHtml is a misnomer, kept for backward compat)
+    const contentHtml = JSON.stringify(validatedData.content)
+    const sanitizedHtml = sanitizeHtml(contentHtml)
     
     // Create the entry
     const entry = await db.journalEntry.create({

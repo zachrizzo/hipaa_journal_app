@@ -51,7 +51,20 @@ class ApiClient {
       })
 
       clearTimeout(timeout)
-      const data = await response.json()
+      
+      // Try to parse JSON response, handle non-JSON responses gracefully
+      let data: ApiResponse<T>
+      try {
+        data = await response.json()
+      } catch (jsonError) {
+        // If JSON parsing fails, create an error response from status/text
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => 'Request failed')
+          throw new ApiError(errorText || `HTTP ${response.status}`, response.status)
+        }
+        // For successful non-JSON responses, return empty data
+        data = { success: true } as ApiResponse<T>
+      }
 
       if (!response.ok) {
         throw new ApiError(data.error || 'Request failed', response.status, data)
@@ -74,7 +87,8 @@ class ApiClient {
       }
 
       // Handle network errors with retry
-      if (retries > 0 && (error as Error).message.includes('fetch')) {
+      // Check for TypeError which fetch throws on network failures
+      if (retries > 0 && (error instanceof TypeError || (error as Error).name === 'TypeError')) {
         await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second before retry
         return this.request<T>(endpoint, options, retries - 1)
       }

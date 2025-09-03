@@ -111,12 +111,12 @@ export class HierarchicalSummaryService {
     // Merge summaries (rule-based aggregation of AI outputs)
     const mergedContent = this.mergeSummaries(entrySummaries as any)
 
-    // Apply salience filtering
-    const salientContent = this.applySalienceFiltering(mergedContent, period);
+    // Apply salience filtering  
+    this.applySalienceFiltering(mergedContent, period);
 
     // Also produce an AI combined overview from AI entry summaries
     try {
-      const combined = await aiGenerateCombinedSummary(
+      await aiGenerateCombinedSummary(
         entrySummaries.map(s => ({ entryId: s.entryId, title: '', summary: String(s.content.bullets[0]?.text || '') })),
         period === 'WEEK' ? 'weekly' : period === 'MONTH' ? 'monthly' : 'custom',
         { dateRange: { start: windowStart.toISOString(), end: now.toISOString() } }

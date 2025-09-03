@@ -4,7 +4,9 @@ import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { generateEntrySummary, validateSummaryContent, generateCombinedSummary } from '@/lib/ai/summarizer'
+import { toPlainText } from '@/lib/utils/tiptap-parser'
 import { createAuditLog, getAuditContext } from '@/lib/security/audit'
+import { rateLimit, RATE_LIMITS } from '@/lib/security/rate-limit'
 import type { ApiResponse } from '@/types/api'
 
 interface HierarchicalSummary {
@@ -57,6 +59,36 @@ export async function POST(
       )
     }
 
+    // Apply rate limiting for combined summaries
+    const rateLimitResult = await rateLimit(
+      request,
+      RATE_LIMITS.combinedSummary,
+      'combined',
+      () => `combined:${session.user.id}` // Custom key generator using user ID
+    )
+
+    if (!rateLimitResult.allowed) {
+      const resetDate = new Date(rateLimitResult.resetTime)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Rate limit exceeded. Try again at ${resetDate.toLocaleTimeString()}`,
+          details: { 
+            remaining: rateLimitResult.remaining, 
+            resetTime: rateLimitResult.resetTime 
+          }
+        },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': String(RATE_LIMITS.combinedSummary.max),
+            'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+            'X-RateLimit-Reset': String(rateLimitResult.resetTime),
+          }
+        }
+      )
+    }
+
     const { entryIds, groupSize, saveIndividualSummaries } = requestSchema.parse(await request.json())
 
     // Fetch all entries
@@ -105,7 +137,8 @@ export async function POST(
         }
 
         // Generate new summary
-        const textContent = entry.contentHtml || JSON.stringify(entry.content)
+        // Use toPlainText to extract proper text from TipTap JSON content
+        const textContent = toPlainText(entry.content ?? entry.contentHtml ?? '')
         const result = await generateEntrySummary(
           entry.title,
           textContent,

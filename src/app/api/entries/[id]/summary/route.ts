@@ -6,10 +6,11 @@ import { db } from '@/lib/db'
 import { generateEntrySummary, validateSummaryContent } from '@/lib/ai/summarizer'
 import { toPlainText } from '@/lib/utils/tiptap-parser'
 import { createAuditLog, getAuditContext } from '@/lib/security/audit'
+import { rateLimit, RATE_LIMITS } from '@/lib/security/rate-limit'
 import type { ApiResponse, GenerateSummaryResponse } from '@/types/api'
 
 interface RouteParams {
-  params: Record<'id', string>
+  params: Promise<{ id: string }>
 }
 
 const requestSchema = z.object({
@@ -32,7 +33,37 @@ export async function POST(
       )
     }
 
-    const { id: entryId } = params
+    // Apply rate limiting based on user ID
+    const rateLimitResult = await rateLimit(
+      request,
+      RATE_LIMITS.summaryGeneration,
+      'summary',
+      () => `summary:${session.user.id}` // Custom key generator using user ID
+    )
+
+    if (!rateLimitResult.allowed) {
+      const resetDate = new Date(rateLimitResult.resetTime)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Rate limit exceeded. Try again at ${resetDate.toLocaleTimeString()}`,
+          details: { 
+            remaining: rateLimitResult.remaining, 
+            resetTime: rateLimitResult.resetTime 
+          }
+        },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': String(RATE_LIMITS.summaryGeneration.max),
+            'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+            'X-RateLimit-Reset': String(rateLimitResult.resetTime),
+          }
+        }
+      )
+    }
+
+    const { id: entryId } = await params
     const { saveToDatabase } = requestSchema.parse(await request.json())
 
     // Get entry with access check
@@ -77,7 +108,8 @@ export async function POST(
     }
 
     // Generate new summary with timeout
-    const textContent = toPlainText(entry.contentHtml || entry.content || 'No content available')
+    // Prefer TipTap JSON content over contentHtml for more accurate text extraction
+    const textContent = toPlainText(entry.content ?? entry.contentHtml ?? 'No content available')
     
     // Create a timeout promise
     const timeoutPromise = new Promise<never>((_, reject) => 
@@ -162,7 +194,7 @@ export async function GET(
       )
     }
 
-    const { id: entryId } = params
+    const { id: entryId } = await params
 
     const entry = await db.journalEntry.findFirst({
       where: {
